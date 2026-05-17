@@ -1,0 +1,230 @@
+// VARIABLES //
+// Keyboard type         = 0x9400
+// Keyboard device ID    = 0x9401
+// Keyboard ddat address = 0x9402-0x9405
+
+// Serial port type         = 0x9406
+// Serial port device ID    = 0x9407
+// Serial port ddat address = 0x9408-0x940B
+
+// Drive manager type         = 0x940C
+// Drive manager device ID    = 0x940D
+// Drive manager ddat address = 0x940E-0x9411
+
+// Drive type         = 0x9412
+// Drive device ID    = 0x9413
+// Drive ddat address = 0x9414-0x9417
+
+// Initialize stack
+    MOVE          SB 0x8000
+    MOVE          SS 0x1000
+    MOVE          SP 0
+
+// Initialize interrupt table
+    MOVE          IL 0x9000
+    MOVE          OA IL
+
+    // HARDWARE INTERRUPTS // 
+
+    // Key pressed
+    GETABS        G0 keyPress
+    STOR-OA       G0 0x04
+    // Key released
+    GETABS        G0 keyRelease
+    STOR-OA       G0 0x08
+    // Peripheral event
+    GETABS        G0 peripheralEvent
+    STOR-OA       G0 0x0C
+    // Motherboard event
+    GETABS        G0 motherboardEvent
+    STOR-OA       G0 0x10
+    // Critical stack event
+    GETABS        G0 criticalStack
+    STOR-OA       G0 0x14
+    // Timer event
+    GETABS        G0 timerEvent
+    STOR-OA       G0 0x18
+    // Storage event
+    GETABS        G0 storageEvent
+    STOR-OA       G0 0x1C
+    // Graphical event
+    GETABS        G0 graphicalEvent
+    STOR-OA       G0 0x20
+    // Memory violation
+    GETABS        G0 memV
+    STOR-OA       G0 0x24
+
+    // SYSTEM CALLS //
+
+    // Fill unused system calls
+    GETABS        G0 unhandledInterrupt
+    MOVE          G1 0xFC // Last used syscall
+
+:fillUnusedSysCallLoopTop
+    ADD           G1 G1 4
+    COMP          G1 0x400
+    BRHS          doneFillUnusedSysCall
+    STOR-OA       G0 G1
+    BRAL          fillUnusedSysCallLoopTop
+
+:doneFillUnusedSysCall
+// Search for devices
+    MOVE          OA 0x5FF8
+
+    // NULL the ddat address variables
+    MOVE          G0 0
+    STOR-ABS      G0 0x9402
+    STOR-ABS      G0 0x9408
+    STOR-ABS      G0 0x940E
+    STOR-ABS      G0 0x9414
+
+
+:deviceScanLoopTop
+    ADD           OA OA 8
+    COMP          OA 0x6100
+    BRHS          doneDeviceScan
+    LOAD-W1S0-OA  G0 1
+    COMP          G0 0x02
+    BREQ          foundStorageDevice
+    COMP          G0 0x05
+    BREQ          foundPeripheral
+    COMP          G0 0xFF
+    BREQ          doneDeviceScan
+    BRAL          deviceScanLoopTop
+
+:foundStorageDevice
+    LOAD-OA       OB 4
+    LOAD-W1S0-OB  G0 0
+    COMP          G0 0x01
+    BREQ          foundDardriveManager
+    COMP          G0 0x02
+    BREQ          foundDardriveDrive
+    BRAL deviceScanLoopTop
+
+:foundDardriveManager
+    LOAD-ABS      G0 0x940E
+    COMP          G0 0
+    BRNE          deviceScanLoopTop
+    STOR-ABS      OB 0x940E
+    SUB           G0 OA 0x6100
+    BSRT          G0 G0 8
+    STOR-W1S0-ABS G0 0x940D
+    MOVE          G0 0x01
+    STOR-W1S0-ABS G0 0x940C
+    BRAL deviceScanLoopTop
+
+:foundDardriveDrive
+    LOAD-ABS      G0 0x9414
+    COMP          G0 0
+    BRNE          deviceScanLoopTop
+    STOR-ABS      OB 0x9414
+    SUB           G0 OA 0x6100
+    BSRT          G0 G0 8
+    STOR-W1S0-ABS G0 0x9413
+    MOVE          G0 0x01
+    STOR-W1S0-ABS G0 0x9412
+    BRAL deviceScanLoopTop
+
+:foundPeripheral
+    LOAD-OA       OB 4
+    LOAD-W1S0-OB  G0 0
+    COMP          G0 0x4B
+    BREQ          foundKeyboard
+    COMP          G0 0x53
+    BREQ          foundSerialPort
+    BRAL          deviceScanLoopTop
+
+:foundKeyboard
+    LOAD-ABS      G0 0x9402
+    COMP          G0 0
+    BRNE          deviceScanLoopTop
+    LOAD-W1S0-OB  G0 1
+    COMP          G0 0x01
+    BREQ          foundDboard
+    BRAL          deviceScanLoopTop
+
+:foundDboard
+    STOR-W1S0-ABS G0 0x9400
+    STOR-ABS      OB 0x9402
+    SUB           G0 OA 0x6100
+    BSRT          G0 G0 8
+    STOR-W1S0-ABS G0 0x9401
+    BRAL          deviceScanLoopTop
+
+:foundSerialPort
+    LOAD-ABS      G0 0x9408
+    COMP          G0 0
+    BRNE          deviceScanLoopTop
+    LOAD-W1S0-OB  G0 1
+    COMP          G0 0x01
+    BREQ          foundDerial
+    BRAL          deviceScanLoopTop
+
+:foundDerial
+    STOR-W1S0-ABS G0 0x9408
+    STOR-ABS      OB 0x9408
+    SUB           G0 OA 0x6100
+    BSRT          G0 G0 8
+    STOR-W1S0-ABS G0 0x9407
+    BRAL          deviceScanLoopTop
+
+:doneDeviceScan
+// Check for a serial port
+    LOAD-ABS      G0 0x9408
+    COMP          G0 0
+    BREQ          term
+    MOVE          G0 0x7E     // ~
+    BRAL-P        derialPrint
+    MOVE          G0 0x44     // D
+    BRAL-P        derialPrint
+    MOVE          G0 0x49     // I
+    BRAL-P        derialPrint
+    MOVE          G0 0x4F     // O
+    BRAL-P        derialPrint
+    MOVE          G0 0x53     // S
+    BRAL-P        derialPrint
+    MOVE          G0 0x7E     // ~
+    BRAL-P        derialPrint
+
+:waitLoop
+    BRAL waitLoop
+
+:term
+    TERM
+
+:unhandledInterrupt
+    INTFIN
+
+:keyPress
+    INTFIN
+
+:keyRelease
+    INTFIN
+
+:peripheralEvent
+    INTFIN
+
+:motherboardEvent
+    INTFIN
+
+:criticalStack
+    INTFIN
+
+:timerEvent
+    INTFIN
+
+:storageEvent
+    INTFIN
+
+:graphicalEvent
+    INTFIN
+
+:memV
+    INTFIN
+
+:derialPrint
+    PUSH          OA
+    LOAD-ABS      OA 0x9408
+    STOR-W1S0-OA  G0 3
+    POP           OA
+    RETURN
