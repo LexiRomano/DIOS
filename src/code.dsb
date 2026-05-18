@@ -1,19 +1,19 @@
 // VARIABLES //
-// Keyboard type         = 0x9400
-// Keyboard device ID    = 0x9401
-// Keyboard ddat address = 0x9402-0x9405
+.alias keyboardType        0x9400
+.alias keyboardDeviceId    0x9401
+.alias keyboardDDATAddress 0x9402 // to 0x9405
 
-// Serial port type         = 0x9406
-// Serial port device ID    = 0x9407
-// Serial port ddat address = 0x9408-0x940B
+.alias serialPortType        0x9406
+.alias serialPortDeviceId    0x9407
+.alias serialPortDDATAddress 0x9408 // to 0x940B
 
-// Drive manager type         = 0x940C
-// Drive manager device ID    = 0x940D
-// Drive manager ddat address = 0x940E-0x9411
+.alias driveManagerType        0x940C
+.alias driveManagerDeviceId    0x940D
+.alias driveManagerDDATAddress 0x940E // to 0x9411
 
-// Drive type         = 0x9412
-// Drive device ID    = 0x9413
-// Drive ddat address = 0x9414-0x9417
+.alias driveType       0x9412
+.alias driveDeviceId   0x9413
+.alias driveDDATAdress 0x9414 // to 0x9417
 
 // Initialize stack
     MOVE          SB 0x8000
@@ -73,10 +73,10 @@
 
     // NULL the ddat address variables
     MOVE          G0 0
-    STOR-ABS      G0 0x9402
-    STOR-ABS      G0 0x9408
-    STOR-ABS      G0 0x940E
-    STOR-ABS      G0 0x9414
+    STOR-ABS      G0 keyboardDDATAddress
+    STOR-ABS      G0 serialPortDDATAddress
+    STOR-ABS      G0 driveManagerDDATAddress
+    STOR-ABS      G0 driveDDATAdress
 
 
 :deviceScanLoopTop
@@ -99,31 +99,30 @@
     BREQ          foundDardriveManager
     COMP          G0 0x02
     BREQ          foundDardriveDrive
-    BRAL deviceScanLoopTop
+    BRAL          deviceScanLoopTop
 
 :foundDardriveManager
-    LOAD-ABS      G0 0x940E
+    STOR-W1S0-ABS G0 driveManagerType
+    LOAD-ABS      G0 driveManagerDDATAddress
     COMP          G0 0
     BRNE          deviceScanLoopTop
-    STOR-ABS      OB 0x940E
+    STOR-ABS      OB driveManagerDDATAddress
     SUB           G0 OA 0x6100
     BSRT          G0 G0 8
-    STOR-W1S0-ABS G0 0x940D
-    MOVE          G0 0x01
-    STOR-W1S0-ABS G0 0x940C
-    BRAL deviceScanLoopTop
+    STOR-W1S0-ABS G0 driveManagerDeviceId
+    
+    BRAL          deviceScanLoopTop
 
 :foundDardriveDrive
-    LOAD-ABS      G0 0x9414
+    STOR-W1S0-ABS G0 driveType
+    LOAD-ABS      G0 driveDDATAdress
     COMP          G0 0
     BRNE          deviceScanLoopTop
-    STOR-ABS      OB 0x9414
+    STOR-ABS      OB driveDDATAdress
     SUB           G0 OA 0x6100
     BSRT          G0 G0 8
-    STOR-W1S0-ABS G0 0x9413
-    MOVE          G0 0x01
-    STOR-W1S0-ABS G0 0x9412
-    BRAL deviceScanLoopTop
+    STOR-W1S0-ABS G0 driveDeviceId
+    BRAL          deviceScanLoopTop
 
 :foundPeripheral
     LOAD-OA       OB 4
@@ -135,7 +134,7 @@
     BRAL          deviceScanLoopTop
 
 :foundKeyboard
-    LOAD-ABS      G0 0x9402
+    LOAD-ABS      G0 keyboardDDATAddress
     COMP          G0 0
     BRNE          deviceScanLoopTop
     LOAD-W1S0-OB  G0 1
@@ -144,11 +143,11 @@
     BRAL          deviceScanLoopTop
 
 :foundDboard
-    STOR-W1S0-ABS G0 0x9400
-    STOR-ABS      OB 0x9402
+    STOR-W1S0-ABS G0 keyboardType
+    STOR-ABS      OB keyboardDDATAddress
     SUB           G0 OA 0x6100
     BSRT          G0 G0 8
-    STOR-W1S0-ABS G0 0x9401
+    STOR-W1S0-ABS G0 keyboardDeviceId
     BRAL          deviceScanLoopTop
 
 :foundSerialPort
@@ -161,11 +160,11 @@
     BRAL          deviceScanLoopTop
 
 :foundDerial
-    STOR-W1S0-ABS G0 0x9408
+    STOR-W1S0-ABS G0 serialPortType
     STOR-ABS      OB 0x9408
     SUB           G0 OA 0x6100
     BSRT          G0 G0 8
-    STOR-W1S0-ABS G0 0x9407
+    STOR-W1S0-ABS G0 serialPortDeviceId
     BRAL          deviceScanLoopTop
 
 :doneDeviceScan
