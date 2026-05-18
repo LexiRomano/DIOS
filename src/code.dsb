@@ -184,6 +184,7 @@
     BRAL-P        derialPrint
     MOVE          G0 0x7E     // ~
     BRAL-P        derialPrint
+    BRAL-P        derialFlush
 
 :waitLoop
     BRAL waitLoop
@@ -223,7 +224,14 @@
 
 :derialPrint
     PUSH          OA
-    LOAD-ABS      OA 0x9408
+    LOAD-ABS      OA serialPortDDATAddress
     STOR-W1S0-OA  G0 3
+    POP           OA
+    RETURN
+
+:derialFlush
+    PUSH          OA
+    LOAD-ABS      OA serialPortDDATAddress
+    STOR-W1S0-OA  G0 4
     POP           OA
     RETURN
