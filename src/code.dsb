@@ -47,11 +47,6 @@
     GETABS        G0 syscallPrint
     STOR-OA       G0 0x100
 
-    // TODO remove when dardrive gets status registers
-    GETABS        G0 storageEvent
-    STOR-OA       G0 0x1C
-    // TODO remove when dardrive gets status registers
-
 // Search for devices
     MOVE          OA 0x5FF8
 
@@ -176,16 +171,23 @@
     GETABS        G0 driveFoundString
     BRAL-P        derialPrintString
 
+// Configure drive
+    MOVE          G0 0b00000000 // disable interrupts
+    STOR-W1S0-OA  G0 0xC
+
     MOVE          G0 0x10000
     STOR-OA       G0 3
     MOVE          G0 0
     STOR-OA       G0 7
     STOR-W1S0-OA  G0 0xB
-    BRAL          waitToDie
-
-:storageEvent
-    INTRES
-    BRAL-ABS      0x10000
+:waitForDriveToLoad
+    LOAD-W1S0-OA  G0 0xD
+    AND           G1 G0 0b00000001
+    BRNE          waitForDriveToLoad
+    AND           G1 G0 0b00000010
+    BREQ-ABS      0x10000
+    GETABS        G0 driveLoadFail
+    BRAL-P        derialPrintString
 
 :waitToDie
     LOAD-ABS      OA serialPortDDATAddress
@@ -273,7 +275,10 @@
     .set * "~DIOS~\r\n\n"
 
 :noDriveFoundString
-    .set * "No drive found, press any key to terminate: "
+    .set * "No drive found, press any key to terminate: \r\n"
 
 :driveFoundString
     .set * "Booting from drive...\r\n\n"
+
+:driveLoadFail
+    .set * "Failed to boot from drive, press any key to terminate: \r\n"
