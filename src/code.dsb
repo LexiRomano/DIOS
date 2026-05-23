@@ -15,59 +15,37 @@
 .alias driveDeviceId   0x9413
 .alias driveDDATAdress 0x9414 // to 0x9417
 
+.alias callSBStorage 0x9418 // to 0x941C
+.alias callSSStorage 0x941D // to 0x941E
+.alias callSPStorage 0x941F // to 0x9420
+
+// STACK CONSTANTS //
+.alias diosSB 0x8000
+.alias diosSS 0x1000
+
 // Initialize stack
-    MOVE          SB 0x8000
-    MOVE          SS 0x1000
+    MOVE          SB diosSB
+    MOVE          SS diosSS
     MOVE          SP 0
 
 // Initialize interrupt table
     MOVE          IL 0x9000
     MOVE          OA IL
 
-    // HARDWARE INTERRUPTS // 
-
-    // Key pressed
-    GETABS        G0 keyPress
-    STOR-OA       G0 0x04
-    // Key released
-    GETABS        G0 keyRelease
-    STOR-OA       G0 0x08
-    // Peripheral event
-    GETABS        G0 peripheralEvent
-    STOR-OA       G0 0x0C
-    // Motherboard event
-    GETABS        G0 motherboardEvent
-    STOR-OA       G0 0x10
-    // Critical stack event
-    GETABS        G0 criticalStack
-    STOR-OA       G0 0x14
-    // Timer event
-    GETABS        G0 timerEvent
-    STOR-OA       G0 0x18
-    // Storage event
-    GETABS        G0 storageEvent
-    STOR-OA       G0 0x1C
-    // Graphical event
-    GETABS        G0 graphicalEvent
-    STOR-OA       G0 0x20
-    // Memory violation
-    GETABS        G0 memV
-    STOR-OA       G0 0x24
-
-    // SYSTEM CALLS //
-
-    // Fill unused system calls
     GETABS        G0 unhandledInterrupt
-    MOVE          G1 0xFC // Last used syscall
+    MOVE          G1 0
 
 :fillUnusedSysCallLoopTop
-    ADD           G1 G1 4
     COMP          G1 0x400
     BRHS          doneFillUnusedSysCall
     STOR-OA       G0 G1
+    ADD           G1 G1 4
     BRAL          fillUnusedSysCallLoopTop
 
 :doneFillUnusedSysCall
+// Initialize used syscalls
+    GETABS        G0 syscallPrint
+    STOR-OA       G0 0x100
 // Search for devices
     MOVE          OA 0x5FF8
 
@@ -178,18 +156,8 @@
     MOVE          G0 0b010 // no int on rcv, autoflush, no int on flush complete
     STOR-W1S0-OA  G0 5
 
-    MOVE          G0 0x7E     // ~
-    BRAL-P        derialPrint
-    MOVE          G0 0x44     // D
-    BRAL-P        derialPrint
-    MOVE          G0 0x49     // I
-    BRAL-P        derialPrint
-    MOVE          G0 0x4F     // O
-    BRAL-P        derialPrint
-    MOVE          G0 0x53     // S
-    BRAL-P        derialPrint
-    MOVE          G0 0x7E     // ~
-    BRAL-P        derialPrint
+    GETABS        G0 DIOSInitString
+    INTTRG        0x0140
 
 :waitLoop
     LOAD-W1S0-OA  G0 6
@@ -205,33 +173,31 @@
 :unhandledInterrupt
     INTFIN
 
-:keyPress
-    INTFIN
+// Print a null-terminated string to derial
+:derialPrintString
+    PUSH          FL
+    PUSH          OA
+    PUSH          G0
+    PUSH          G1
+    COMP          G0 0
+    BREQ          derialPrintStringDone
+    MOVE          OA G0
+    MOVE          G1 0
+:derialPrintStringLoop
+    LOAD-W1S0-OA  G0 G1
+    COMP          G0 0
+    BREQ          derialPrintStringDone
+    BRAL-P        derialPrint
+    ADD           G1 G1 1
+    BRAL          derialPrintStringLoop
+:derialPrintStringDone
+    POP           G1
+    POP           G0
+    POP           OA
+    POP           FL
+    RETURN
 
-:keyRelease
-    INTFIN
-
-:peripheralEvent
-    INTFIN
-
-:motherboardEvent
-    INTFIN
-
-:criticalStack
-    INTFIN
-
-:timerEvent
-    INTFIN
-
-:storageEvent
-    INTFIN
-
-:graphicalEvent
-    INTFIN
-
-:memV
-    INTFIN
-
+// Print what is in the G0 register to derial
 :derialPrint
     PUSH          FL
     PUSH          OA
@@ -248,9 +214,31 @@
     POP           FL
     RETURN
 
-:derialFlush
-    PUSH          OA
-    LOAD-ABS      OA serialPortDDATAddress
-    STOR-W1S0-OA  G0 4
-    POP           OA
-    RETURN
+:syscallPrint // 0x40
+    STOR-ABS      SB callSBStorage
+    STOR-ABS      SS callSSStorage
+    STOR-ABS      SP callSPStorage
+    MOVE          SB diosSB
+    MOVE          SS diosSS
+    MOVE          SP 0
+
+    PUSH          G7
+    INTGPR        G7
+
+    COMP          G7 0x00
+    BREQ-P        derialPrint
+
+    COMP          G7 0x01
+    BREQ-P        derialPrintString
+
+    POP           G7
+    BRAL          syscallRestoreStackAndFinish
+
+:syscallRestoreStackAndFinish
+    LOAD-ABS      SB callSBStorage
+    LOAD-ABS      SS callSSStorage
+    LOAD-ABS      SP callSPStorage
+    INTFIN
+
+:DIOSInitString
+    .set * "~DIOS~"
