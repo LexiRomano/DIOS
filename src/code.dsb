@@ -151,7 +151,7 @@
     BRAL          deviceScanLoopTop
 
 :foundSerialPort
-    LOAD-ABS      G0 0x9408
+    LOAD-ABS      G0 serialPortDDATAddress
     COMP          G0 0
     BRNE          deviceScanLoopTop
     LOAD-W1S0-OB  G0 1
@@ -161,7 +161,7 @@
 
 :foundDerial
     STOR-W1S0-ABS G0 serialPortType
-    STOR-ABS      OB 0x9408
+    STOR-ABS      OB serialPortDDATAddress
     SUB           G0 OA 0x6100
     BSRT          G0 G0 8
     STOR-W1S0-ABS G0 serialPortDeviceId
@@ -169,9 +169,15 @@
 
 :doneDeviceScan
 // Check for a serial port
-    LOAD-ABS      G0 0x9408
+    LOAD-ABS      G0 serialPortDDATAddress
     COMP          G0 0
     BREQ          term
+    
+// Configure derial
+    MOVE          OA G0
+    MOVE          G0 0b010 // no int on rcv, autoflush, no int on flush complete
+    STOR-W1S0-OA  G0 5
+
     MOVE          G0 0x7E     // ~
     BRAL-P        derialPrint
     MOVE          G0 0x44     // D
@@ -184,9 +190,13 @@
     BRAL-P        derialPrint
     MOVE          G0 0x7E     // ~
     BRAL-P        derialPrint
-    BRAL-P        derialFlush
 
 :waitLoop
+    LOAD-W1S0-OA  G0 6
+    AND           G0 G0 0b00000100
+    BREQ          waitLoop
+    LOAD-W1S0-OA  G0 2
+    BRAL-P        derialPrint
     BRAL waitLoop
 
 :term
@@ -223,10 +233,19 @@
     INTFIN
 
 :derialPrint
+    PUSH          FL
     PUSH          OA
+    PUSH          G0
     LOAD-ABS      OA serialPortDDATAddress
     STOR-W1S0-OA  G0 3
+:derialPrintWaitForFlush
+    // Keep checking the status register for buffer not empty
+    LOAD-W1S0-OA  G0 6
+    AND           G0 G0 0b00000001
+    BRNE          derialPrintWaitForFlush
+    POP           G0
     POP           OA
+    POP           FL
     RETURN
 
 :derialFlush
