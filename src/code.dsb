@@ -46,6 +46,12 @@
 // Initialize used syscalls
     GETABS        G0 syscallPrint
     STOR-OA       G0 0x100
+
+    // TODO remove when dardrive gets status registers
+    GETABS        G0 storageEvent
+    STOR-OA       G0 0x1C
+    // TODO remove when dardrive gets status registers
+
 // Search for devices
     MOVE          OA 0x5FF8
 
@@ -157,15 +163,38 @@
     STOR-W1S0-OA  G0 5
 
     GETABS        G0 DIOSInitString
-    INTTRG        0x0140
+    BRAL-P        derialPrintString
 
-:waitLoop
+    LOAD-ABS      OA driveDDATAdress
+    COMP          OA 0
+    BRNE          boot
+    GETABS        G0 noDriveFoundString
+    BRAL-P        derialPrintString
+    BRAL          waitToDie
+
+:boot
+    GETABS        G0 driveFoundString
+    BRAL-P        derialPrintString
+
+    MOVE          G0 0x10000
+    STOR-OA       G0 3
+    MOVE          G0 0
+    STOR-OA       G0 7
+    STOR-W1S0-OA  G0 0xB
+    BRAL          waitToDie
+
+:storageEvent
+    INTRES
+    BRAL-ABS      0x10000
+
+:waitToDie
+    LOAD-ABS      OA serialPortDDATAddress
+
+:waitToDieLoop
     LOAD-W1S0-OA  G0 6
     AND           G0 G0 0b00000100
-    BREQ          waitLoop
+    BREQ          waitToDieLoop
     LOAD-W1S0-OA  G0 2
-    BRAL-P        derialPrint
-    BRAL waitLoop
 
 :term
     TERM
@@ -241,4 +270,10 @@
     INTFIN
 
 :DIOSInitString
-    .set * "~DIOS~"
+    .set * "~DIOS~\r\n\n"
+
+:noDriveFoundString
+    .set * "No drive found, press any key to terminate: "
+
+:driveFoundString
+    .set * "Booting from drive...\r\n\n"
