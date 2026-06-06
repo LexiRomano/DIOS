@@ -1,0 +1,9 @@
+.source src/main.dsb
+.source src/print.dsb
+.source src/charIn.dsb
+
+.out dios.bin
+
+main
+print
+charIn

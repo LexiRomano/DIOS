@@ -1,3 +1,5 @@
 #!/usr/bin/bash
 
-dssembly ./src/code.dsb ./dios.bin
+echo "Making DIOS..."
+
+dssembly config.dfg && echo "Success!"

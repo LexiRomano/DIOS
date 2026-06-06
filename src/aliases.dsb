@@ -1,0 +1,37 @@
+// VARIABLES //
+.alias keyboardType        0x9400
+.alias keyboardDeviceId    0x9401
+.alias keyboardDDATAddress 0x9402 // to 0x9405
+
+.alias serialPortType        0x9406
+.alias serialPortDeviceId    0x9407
+.alias serialPortDDATAddress 0x9408 // to 0x940B
+
+.alias driveManagerType        0x940C
+.alias driveManagerDeviceId    0x940D
+.alias driveManagerDDATAddress 0x940E // to 0x9411
+
+.alias driveType       0x9412
+.alias driveDeviceId   0x9413
+.alias driveDDATAdress 0x9414 // to 0x9417
+
+.alias callSBStorage 0x9418 // to 0x941C
+.alias callSSStorage 0x941D // to 0x941E
+.alias callSPStorage 0x941F // to 0x9420
+
+.alias serialInputBuffer            0x9421 // to 0x9520
+.alias serialInputBufferHeadPointer 0x9521
+.alias serialInputBufferTailPointer 0x9522
+.alias serialInputBufferSize        0x8 // constant
+
+.alias keyboardInputBuffer            0x9523 // to 0x9622
+.alias keyboardInputBufferHeadPointer 0x9623
+.alias keyboardInputBufferTailPointer 0x9624
+.alias keyboardInputBufferSize        0x100 // constant
+
+// STACK CONSTANTS //
+.alias DIOS_SB 0x8000
+.alias DIOS_SS 0x1000
+
+// MISC //
+.alias BOOT_LOCATION 0xA000

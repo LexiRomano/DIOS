@@ -1,0 +1,49 @@
+.include src/aliases.dsb
+
+.section charIn
+
+.export syscallCharIn // 0x41
+    STOR-ABS      SB callSBStorage
+    STOR-W2S0-ABS SS callSSStorage
+    STOR-W2S0-ABS SP callSPStorage
+    MOVE          SB DIOS_SB
+    MOVE          SS DIOS_SS
+    MOVE          SP 0
+    PUSH          FL
+
+    PUSH          G7
+    INTGPR        G7
+
+    COMP          G7 0x00
+    BREQ-P        getNextSerialChar
+
+    POP           G7
+    .requires     interruptRestoreAndFinish
+    BRAL          interruptRestoreAndFinish
+
+
+:getNextSerialChar
+    PUSH          G1
+
+    LOAD-W1S0-ABS G1 serialInputBufferTailPointer
+    LOAD-W1S0-ABS G0 serialInputBufferHeadPointer
+
+    COMP          G0 G1
+    MOVE          G0 0
+    BREQ          doneGetNextSerialChar
+
+    PUSH          OA
+    MOVE          OA serialInputBuffer
+    LOAD-W1S0-OA  G0 G1
+
+    ADD           G1 G1 1
+    COMP          G1 serialInputBufferSize
+    BRLO          getNextSerialCharStoreNewTail
+    MOVE          G1 0
+
+:getNextSerialCharStoreNewTail
+    STOR-W1S0-ABS G1 serialInputBufferTailPointer
+    POP           OA
+:doneGetNextSerialChar
+    POP           G1
+    RETURN

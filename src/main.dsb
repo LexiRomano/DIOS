@@ -1,44 +1,12 @@
-// VARIABLES //
-.alias keyboardType        0x9400
-.alias keyboardDeviceId    0x9401
-.alias keyboardDDATAddress 0x9402 // to 0x9405
+.include src/aliases.dsb
 
-.alias serialPortType        0x9406
-.alias serialPortDeviceId    0x9407
-.alias serialPortDDATAddress 0x9408 // to 0x940B
+.section main
 
-.alias driveManagerType        0x940C
-.alias driveManagerDeviceId    0x940D
-.alias driveManagerDDATAddress 0x940E // to 0x9411
-
-.alias driveType       0x9412
-.alias driveDeviceId   0x9413
-.alias driveDDATAdress 0x9414 // to 0x9417
-
-.alias callSBStorage 0x9418 // to 0x941C
-.alias callSSStorage 0x941D // to 0x941E
-.alias callSPStorage 0x941F // to 0x9420
-
-.alias serialInputBuffer            0x9421 // to 0x9520
-.alias serialInputBufferHeadPointer 0x9521
-.alias serialInputBufferTailPointer 0x9522
-.alias serialInputBufferSize        0x8 // constant
-
-.alias keyboardInputBuffer            0x9523 // to 0x9622
-.alias keyboardInputBufferHeadPointer 0x9623
-.alias keyboardInputBufferTailPointer 0x9624
-.alias keyboardInputBufferSize        0x100 // constant
-
-// STACK CONSTANTS //
-.alias diosSB 0x8000
-.alias diosSS 0x1000
-
-// MISC //
-.alias bootLocation 0xA000
+.requires derialPrintString
 
 // Initialize stack
-    MOVE          SB diosSB
-    MOVE          SS diosSS
+    MOVE          SB DIOS_SB
+    MOVE          SS DIOS_SS
     MOVE          SP 0
 
 // Initialize variables in RAM
@@ -74,9 +42,11 @@
     STOR-OA       G0 0x0C
 
 // Initialize used syscalls
+    .requires        syscallPrint
     GETABS        G0 syscallPrint
     STOR-OA       G0 0x100
 
+    .requires        syscallCharIn
     GETABS        G0 syscallCharIn
     STOR-OA       G0 0x104
 
@@ -208,7 +178,7 @@
     MOVE          G0 0b00000000 // disable interrupts
     STOR-W1S0-OA  G0 0xC
 
-    MOVE          G0 bootLocation
+    MOVE          G0 BOOT_LOCATION
     STOR-OA       G0 3
     MOVE          G0 0
     STOR-OA       G0 7
@@ -218,7 +188,7 @@
     AND           G1 G0 0b00000001
     BRNE          waitForDriveToLoad
     AND           G1 G0 0b00000010
-    BREQ-ABS      bootLocation
+    BREQ-ABS      BOOT_LOCATION
     GETABS        G0 driveLoadFail
     BRAL-P        derialPrintString
 
@@ -247,8 +217,8 @@
     STOR-ABS      SB callSBStorage
     STOR-ABS      SS callSSStorage
     STOR-ABS      SP callSPStorage
-    MOVE          SB diosSB
-    MOVE          SS diosSS
+    MOVE          SB DIOS_SB
+    MOVE          SS DIOS_SS
     MOVE          SP 0
     PUSH          FL
 
@@ -287,113 +257,7 @@
     POP           G0
     RETURN
 
-// Print a null-terminated string to derial
-:derialPrintString
-    PUSH          FL
-    PUSH          OA
-    PUSH          G0
-    PUSH          G1
-    COMP          G0 0
-    BREQ          derialPrintStringDone
-    MOVE          OA G0
-    MOVE          G1 0
-:derialPrintStringLoop
-    LOAD-W1S0-OA  G0 G1
-    COMP          G0 0
-    BREQ          derialPrintStringDone
-    BRAL-P        derialPrint
-    ADD           G1 G1 1
-    BRAL          derialPrintStringLoop
-:derialPrintStringDone
-    POP           G1
-    POP           G0
-    POP           OA
-    POP           FL
-    RETURN
-
-// Print what is in the G0 register to derial
-:derialPrint
-    PUSH          FL
-    PUSH          OA
-    PUSH          G0
-    LOAD-ABS      OA serialPortDDATAddress
-    STOR-W1S0-OA  G0 3
-:derialPrintWaitForFlush
-    // Keep checking the status register for buffer not empty
-    LOAD-W1S0-OA  G0 6
-    AND           G0 G0 0b00000001
-    BRNE          derialPrintWaitForFlush
-    POP           G0
-    POP           OA
-    POP           FL
-    RETURN
-
-:getNextSerialChar
-    PUSH          G1
-
-    LOAD-W1S0-ABS G1 serialInputBufferTailPointer
-    LOAD-W1S0-ABS G0 serialInputBufferHeadPointer
-
-    COMP          G0 G1
-    MOVE          G0 0
-    BREQ          doneGetNextSerialChar
-
-    PUSH          OA
-    MOVE          OA serialInputBuffer
-    LOAD-W1S0-OA  G0 G1
-
-    ADD           G1 G1 1
-    COMP          G1 serialInputBufferSize
-    BRLO          getNextSerialCharStoreNewTail
-    MOVE          G1 0
-
-:getNextSerialCharStoreNewTail
-    STOR-W1S0-ABS G1 serialInputBufferTailPointer
-    POP           OA
-:doneGetNextSerialChar
-    POP           G1
-    RETURN
-
-:syscallPrint // 0x40
-    STOR-ABS      SB callSBStorage
-    STOR-W2S0-ABS SS callSSStorage
-    STOR-W2S0-ABS SP callSPStorage
-    MOVE          SB diosSB
-    MOVE          SS diosSS
-    MOVE          SP 0
-    PUSH          FL
-
-    PUSH          G7
-    INTGPR        G7
-
-    COMP          G7 0x00
-    BREQ-P        derialPrint
-
-    COMP          G7 0x01
-    BREQ-P        derialPrintString
-
-    POP           G7
-    BRAL          interruptRestoreAndFinish
-
-:syscallCharIn // 0x41
-    STOR-ABS      SB callSBStorage
-    STOR-W2S0-ABS SS callSSStorage
-    STOR-W2S0-ABS SP callSPStorage
-    MOVE          SB diosSB
-    MOVE          SS diosSS
-    MOVE          SP 0
-    PUSH          FL
-
-    PUSH          G7
-    INTGPR        G7
-
-    COMP          G7 0x00
-    BREQ-P        getNextSerialChar
-
-    POP           G7
-    BRAL          interruptRestoreAndFinish
-
-:interruptRestoreAndFinish
+.export interruptRestoreAndFinish
     POP           FL
     LOAD-ABS      SB callSBStorage
     LOAD-W2S0-ABS SS callSSStorage

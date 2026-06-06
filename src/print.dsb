@@ -1,0 +1,65 @@
+.include src/aliases.dsb
+
+.section print
+
+// Print a null-terminated string to derial
+.export derialPrintString
+    PUSH          FL
+    PUSH          OA
+    PUSH          G0
+    PUSH          G1
+    COMP          G0 0
+    BREQ          derialPrintStringDone
+    MOVE          OA G0
+    MOVE          G1 0
+:derialPrintStringLoop
+    LOAD-W1S0-OA  G0 G1
+    COMP          G0 0
+    BREQ          derialPrintStringDone
+    BRAL-P        derialPrint
+    ADD           G1 G1 1
+    BRAL          derialPrintStringLoop
+:derialPrintStringDone
+    POP           G1
+    POP           G0
+    POP           OA
+    POP           FL
+    RETURN
+
+// Print what is in the G0 register to derial
+:derialPrint
+    PUSH          FL
+    PUSH          OA
+    PUSH          G0
+    LOAD-ABS      OA serialPortDDATAddress
+    STOR-W1S0-OA  G0 3
+:derialPrintWaitForFlush
+    // Keep checking the status register for buffer not empty
+    LOAD-W1S0-OA  G0 6
+    AND           G0 G0 0b00000001
+    BRNE          derialPrintWaitForFlush
+    POP           G0
+    POP           OA
+    POP           FL
+    RETURN
+
+.export syscallPrint // 0x40
+    STOR-ABS      SB callSBStorage
+    STOR-ABS      SS callSSStorage
+    STOR-ABS      SP callSPStorage
+    MOVE          SB DIOS_SB
+    MOVE          SS DIOS_SS
+    MOVE          SP 0
+
+    PUSH          G7
+    INTGPR        G7
+
+    COMP          G7 0x00
+    BREQ-P        derialPrint
+
+    COMP          G7 0x01
+    BREQ-P        derialPrintString
+
+    POP           G7
+    .requires     interruptRestoreAndFinish
+    BRAL          interruptRestoreAndFinish
