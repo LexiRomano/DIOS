@@ -21,3 +21,5 @@ This will return the next key in the serial port input buffer to G0. If the buff
 ### `0x0141` Char in from keyboard
 
 This will return the next key in the keyboard input buffer to G0. If the buffer is empty, 0 is returned.
+
+NOTE: only regular characters and their shifted versions are currently implemented.

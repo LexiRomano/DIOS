@@ -22,12 +22,21 @@
 .alias serialInputBuffer            0x9421 // to 0x9520
 .alias serialInputBufferHeadPointer 0x9521
 .alias serialInputBufferTailPointer 0x9522
-.alias serialInputBufferSize        0x8 // constant
+.alias SERIAL_INPUT_BUFFER_SIZE     0x100 // constant
 
 .alias keyboardInputBuffer            0x9523 // to 0x9622
 .alias keyboardInputBufferHeadPointer 0x9623
 .alias keyboardInputBufferTailPointer 0x9624
-.alias keyboardInputBufferSize        0x100 // constant
+.alias KEYBOARD_INPUT_BUFFER_SIZE     0x100 // constant
+
+// 0, 0, RALT, LALT, RCTRL, LCTRL, RSHIFT, LSHIFT
+.alias keyboardModifiers 0x9625
+.alias RALT_MASK   0b00100000
+.alias LALT_MASK   0b00010000
+.alias RCTRL_MASK  0b00001000
+.alias LCTRL_MASK  0b00000100
+.alias RSHIFT_MASK 0b00000010
+.alias LSHIFT_MASK 0b00000001
 
 // STACK CONSTANTS //
 .alias DIOS_SB 0x8000

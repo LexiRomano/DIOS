@@ -1,0 +1,104 @@
+.include src/aliases.dsb
+
+.section scan
+
+.export scanForDevices
+    MOVE          OA 0x5FF8
+
+    // NULL the ddat address variables
+    MOVE          G0 0
+    STOR-ABS      G0 keyboardDDATAddress
+    STOR-ABS      G0 serialPortDDATAddress
+    STOR-ABS      G0 driveManagerDDATAddress
+    STOR-ABS      G0 driveDDATAdress
+
+:deviceScanLoopTop
+    ADD           OA OA 8
+    COMP          OA 0x6100
+    BRHS          doneDeviceScan
+    LOAD-W1S0-OA  G0 1
+    COMP          G0 0x02
+    BREQ          foundStorageDevice
+    COMP          G0 0x05
+    BREQ          foundPeripheral
+    COMP          G0 0xFF
+    BREQ          doneDeviceScan
+    BRAL          deviceScanLoopTop
+
+:foundStorageDevice
+    LOAD-OA       OB 4
+    LOAD-W1S0-OB  G0 0
+    COMP          G0 0x01
+    BREQ          foundDardriveManager
+    COMP          G0 0x02
+    BREQ          foundDardriveDrive
+    BRAL          deviceScanLoopTop
+
+:foundDardriveManager
+    STOR-W1S0-ABS G0 driveManagerType
+    LOAD-ABS      G0 driveManagerDDATAddress
+    COMP          G0 0
+    BRNE          deviceScanLoopTop
+    STOR-ABS      OB driveManagerDDATAddress
+    SUB           G0 OA 0x6100
+    BSRT          G0 G0 8
+    STOR-W1S0-ABS G0 driveManagerDeviceId
+    
+    BRAL          deviceScanLoopTop
+
+:foundDardriveDrive
+    STOR-W1S0-ABS G0 driveType
+    LOAD-ABS      G0 driveDDATAdress
+    COMP          G0 0
+    BRNE          deviceScanLoopTop
+    STOR-ABS      OB driveDDATAdress
+    SUB           G0 OA 0x6100
+    BSRT          G0 G0 8
+    STOR-W1S0-ABS G0 driveDeviceId
+    BRAL          deviceScanLoopTop
+
+:foundPeripheral
+    LOAD-OA       OB 4
+    LOAD-W1S0-OB  G0 0
+    COMP          G0 0x4B
+    BREQ          foundKeyboard
+    COMP          G0 0x53
+    BREQ          foundSerialPort
+    BRAL          deviceScanLoopTop
+
+:foundKeyboard
+    LOAD-ABS      G0 keyboardDDATAddress
+    COMP          G0 0
+    BRNE          deviceScanLoopTop
+    LOAD-W1S0-OB  G0 1
+    COMP          G0 0x01
+    BREQ          foundDboard
+    BRAL          deviceScanLoopTop
+
+:foundDboard
+    STOR-W1S0-ABS G0 keyboardType
+    STOR-ABS      OB keyboardDDATAddress
+    SUB           G0 OA 0x6100
+    BSRT          G0 G0 8
+    STOR-W1S0-ABS G0 keyboardDeviceId
+    BRAL          deviceScanLoopTop
+
+:foundSerialPort
+    LOAD-ABS      G0 serialPortDDATAddress
+    COMP          G0 0
+    BRNE          deviceScanLoopTop
+    LOAD-W1S0-OB  G0 1
+    COMP          G0 0x01
+    BREQ          foundDerial
+    BRAL          deviceScanLoopTop
+
+:foundDerial
+    STOR-W1S0-ABS G0 serialPortType
+    STOR-ABS      OB serialPortDDATAddress
+    SUB           G0 OA 0x6100
+    BSRT          G0 G0 8
+    STOR-W1S0-ABS G0 serialPortDeviceId
+    BRAL          deviceScanLoopTop
+
+:doneDeviceScan
+    RETURN
