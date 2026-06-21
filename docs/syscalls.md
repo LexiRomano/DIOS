@@ -23,3 +23,11 @@ This will return the next key in the serial port input buffer to G0. If the buff
 This will return the next key in the keyboard input buffer to G0. If the buffer is empty, 0 is returned.
 
 NOTE: only regular characters and their shifted versions are currently implemented.
+
+## `0x42` Sleep
+
+NOTE: Sleeping may result in corrupted keyboard/serial input. To be fixed
+
+### `0x0042` Microsecond sleep
+
+This will block for the number of microseconds provided in G0.

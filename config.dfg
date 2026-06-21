@@ -2,6 +2,7 @@
 .source src/scan.dsb
 .source src/print.dsb
 .source src/charIn.dsb
+.source src/sleep.dsb
 
 .out dios.bin
 
@@ -9,3 +10,4 @@ main
 scan
 print
 charIn
+sleep

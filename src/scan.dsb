@@ -11,6 +11,7 @@
     STOR-ABS      G0 serialPortDDATAddress
     STOR-ABS      G0 driveManagerDDATAddress
     STOR-ABS      G0 driveDDATAdress
+    STOR-ABS      G0 timerDDATAddress
 
 :deviceScanLoopTop
     ADD           OA OA 8
@@ -21,6 +22,8 @@
     BREQ          foundStorageDevice
     COMP          G0 0x05
     BREQ          foundPeripheral
+    COMP          G0 0x04
+    BREQ          foundTimer
     COMP          G0 0xFF
     BREQ          doneDeviceScan
     BRAL          deviceScanLoopTop
@@ -40,8 +43,8 @@
     COMP          G0 0
     BRNE          deviceScanLoopTop
     STOR-ABS      OB driveManagerDDATAddress
-    SUB           G0 OA 0x6100
-    BSRT          G0 G0 8
+    SUB           G0 OA 0x6000
+    BSRT          G0 G0 3
     STOR-W1S0-ABS G0 driveManagerDeviceId
     
     BRAL          deviceScanLoopTop
@@ -52,8 +55,8 @@
     COMP          G0 0
     BRNE          deviceScanLoopTop
     STOR-ABS      OB driveDDATAdress
-    SUB           G0 OA 0x6100
-    BSRT          G0 G0 8
+    SUB           G0 OA 0x6000
+    BSRT          G0 G0 3
     STOR-W1S0-ABS G0 driveDeviceId
     BRAL          deviceScanLoopTop
 
@@ -78,8 +81,8 @@
 :foundDboard
     STOR-W1S0-ABS G0 keyboardType
     STOR-ABS      OB keyboardDDATAddress
-    SUB           G0 OA 0x6100
-    BSRT          G0 G0 8
+    SUB           G0 OA 0x6000
+    BSRT          G0 G0 3
     STOR-W1S0-ABS G0 keyboardDeviceId
     BRAL          deviceScanLoopTop
 
@@ -95,9 +98,22 @@
 :foundDerial
     STOR-W1S0-ABS G0 serialPortType
     STOR-ABS      OB serialPortDDATAddress
-    SUB           G0 OA 0x6100
-    BSRT          G0 G0 8
+    SUB           G0 OA 0x6000
+    BSRT          G0 G0 3
     STOR-W1S0-ABS G0 serialPortDeviceId
+    BRAL          deviceScanLoopTop
+
+:foundTimer
+    LOAD-OA       OB 4
+    LOAD-W1S0-OB  G0 0
+    COMP          G0 0x01
+    BRNE          deviceScanLoopTop
+    // Is dimer
+    STOR-W1S0-ABS G0 timerType
+    STOR-ABS      OB timerDDATAddress
+    SUB           G0 OA 0x6000
+    BSRT          G0 G0 3
+    STOR-W1S0-ABS G0 timerDeviceId
     BRAL          deviceScanLoopTop
 
 :doneDeviceScan

@@ -29,6 +29,10 @@
 .alias keyboardInputBufferTailPointer 0x9624
 .alias KEYBOARD_INPUT_BUFFER_SIZE     0x100 // constant
 
+.alias timerType        0x9625
+.alias timerDeviceId    0x9626
+.alias timerDDATAddress 0x9627 // to 962A
+
 // 0, 0, RALT, LALT, RCTRL, LCTRL, RSHIFT, LSHIFT
 .alias keyboardModifiers 0x9625
 .alias RALT_MASK   0b00100000

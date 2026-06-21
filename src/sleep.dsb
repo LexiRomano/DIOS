@@ -1,0 +1,57 @@
+.include src/aliases.dsb
+
+.section sleep
+
+.export syscallSleep // 0x42
+    STOR-ABS      SB callSBStorage
+    STOR-ABS      SS callSSStorage
+    STOR-ABS      SP callSPStorage
+    MOVE          SB DIOS_SB
+    MOVE          SS DIOS_SS
+    MOVE          SP 0
+
+    PUSH          G7
+    INTGPR        G7
+
+    COMP          G7 0x00
+    BREQ-P        microSleep
+
+    POP           G7
+    .requires     interruptRestoreAndFinish
+    BRAL          interruptRestoreAndFinish
+
+
+
+:microSleep
+    PUSH          G0
+    PUSH          G2
+    PUSH          OA
+
+    LOAD-ABS      OA timerDDATAddress
+    MOVE          G2 0 // Config: no interrupts, one-shot
+    STOR-W1S0-OA  G2 1
+
+    :microSleepBigSectionLoop
+    COMP          G0 0xFFFF
+    BRLS          microSleepSmallSection
+    SUB           G0 G0 0xFFFF
+    MOVE          G2 0xFFFF
+    STOR-W2S0-OA  G2 2
+    BRAL-P        microSleepWait
+    BRAL          microSleepBigSectionLoop
+
+    :microSleepSmallSection
+    STOR-W2S0-OA  G0 2
+    BRAL-P        microSleepWait
+
+    POP           OA
+    POP           G2
+    POP           G0
+    RETURN
+
+:microSleepWait
+    LOAD-W2S0-OA  G2 2
+    //DEBUG         G2
+    COMP          G2 0
+    BRNE          microSleepWait
+    RETURN

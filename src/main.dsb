@@ -52,6 +52,10 @@
     GETABS        G0 syscallCharIn
     STOR-OA       G0 0x104
 
+    .requires        syscallSleep
+    GETABS        G0 syscallSleep
+    STOR-OA       G0 0x108
+
 // Scan for devices
     .requires     scanForDevices
     BRAL-P        scanForDevices
@@ -78,6 +82,17 @@
     BRAL          waitToDie
 
 :boot
+    // TMP
+    LOAD-ABS      G0 timerDDATAddress
+    COMP          G0 0
+    BREQ          zzz
+    GETABS        G0 weFoundIt
+    INTTRG        0x0140
+    BRAL          qqq
+    :zzz
+    GETABS        G0 weDidntFind
+    INTTRG        0x0140
+    :qqq
     GETABS        G0 driveFoundString
     BRAL-P        derialPrintString
 
@@ -176,3 +191,9 @@
 
 :driveLoadFail
     .set * "Failed to boot from drive, press any key to terminate: \r\n"
+
+:weFoundIt
+    .set * "Dimer found!\r\n"
+
+:weDidntFind
+    .set * "Not found :(\r\n"
