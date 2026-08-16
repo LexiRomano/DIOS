@@ -1,50 +1,50 @@
 // VARIABLES //
-.alias keyboardType        0x9400
-.alias keyboardDeviceId    0x9401
-.alias keyboardDDATAddress 0x9402 // to 0x9405
+.define keyboardType        0x9400
+.define keyboardDeviceId    0x9401
+.define keyboardDDATAddress 0x9402 // to 0x9405
 
-.alias serialPortType        0x9406
-.alias serialPortDeviceId    0x9407
-.alias serialPortDDATAddress 0x9408 // to 0x940B
+.define serialPortType        0x9406
+.define serialPortDeviceId    0x9407
+.define serialPortDDATAddress 0x9408 // to 0x940B
 
-.alias driveManagerType        0x940C
-.alias driveManagerDeviceId    0x940D
-.alias driveManagerDDATAddress 0x940E // to 0x9411
+.define driveManagerType        0x940C
+.define driveManagerDeviceId    0x940D
+.define driveManagerDDATAddress 0x940E // to 0x9411
 
-.alias driveType       0x9412
-.alias driveDeviceId   0x9413
-.alias driveDDATAdress 0x9414 // to 0x9417
+.define driveType       0x9412
+.define driveDeviceId   0x9413
+.define driveDDATAdress 0x9414 // to 0x9417
 
-.alias callSBStorage 0x9418 // to 0x941C
-.alias callSSStorage 0x941D // to 0x941E
-.alias callSPStorage 0x941F // to 0x9420
+.define callSBStorage 0x9418 // to 0x941C
+.define callSSStorage 0x941D // to 0x941E
+.define callSPStorage 0x941F // to 0x9420
 
-.alias serialInputBuffer            0x9421 // to 0x9520
-.alias serialInputBufferHeadPointer 0x9521
-.alias serialInputBufferTailPointer 0x9522
-.alias SERIAL_INPUT_BUFFER_SIZE     0x100 // constant
+.define serialInputBuffer            0x9421 // to 0x9520
+.define serialInputBufferHeadPointer 0x9521
+.define serialInputBufferTailPointer 0x9522
+.define SERIAL_INPUT_BUFFER_SIZE     0x100 // constant
 
-.alias keyboardInputBuffer            0x9523 // to 0x9622
-.alias keyboardInputBufferHeadPointer 0x9623
-.alias keyboardInputBufferTailPointer 0x9624
-.alias KEYBOARD_INPUT_BUFFER_SIZE     0x100 // constant
+.define keyboardInputBuffer            0x9523 // to 0x9622
+.define keyboardInputBufferHeadPointer 0x9623
+.define keyboardInputBufferTailPointer 0x9624
+.define KEYBOARD_INPUT_BUFFER_SIZE     0x100 // constant
 
-.alias timerType        0x9625
-.alias timerDeviceId    0x9626
-.alias timerDDATAddress 0x9627 // to 962A
+.define timerType        0x9625
+.define timerDeviceId    0x9626
+.define timerDDATAddress 0x9627 // to 962A
 
 // 0, 0, RALT, LALT, RCTRL, LCTRL, RSHIFT, LSHIFT
-.alias keyboardModifiers 0x9625
-.alias RALT_MASK   0b00100000
-.alias LALT_MASK   0b00010000
-.alias RCTRL_MASK  0b00001000
-.alias LCTRL_MASK  0b00000100
-.alias RSHIFT_MASK 0b00000010
-.alias LSHIFT_MASK 0b00000001
+.define keyboardModifiers 0x9625
+.define RALT_MASK   0b00100000
+.define LALT_MASK   0b00010000
+.define RCTRL_MASK  0b00001000
+.define LCTRL_MASK  0b00000100
+.define RSHIFT_MASK 0b00000010
+.define LSHIFT_MASK 0b00000001
 
 // STACK CONSTANTS //
-.alias DIOS_SB 0x8000
-.alias DIOS_SS 0x1000
+.define DIOS_SB 0x8000
+.define DIOS_SS 0x1000
 
 // MISC //
-.alias BOOT_LOCATION 0xA000
+.define BOOT_LOCATION 0xA000
