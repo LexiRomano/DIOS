@@ -4,359 +4,359 @@
 .requires interruptRestoreAndFinish
 
 .export syscallCharIn // 0x41
-    STOR-ABS      SB callSBStorage
-    STOR-W2S0-ABS SS callSSStorage
-    STOR-W2S0-ABS SP callSPStorage
-    MOVE          SB DIOS_SB
-    MOVE          SS DIOS_SS
-    MOVE          SP 0
-    PUSH          FL
+    storwab  SB callSBStorage
+    storhab  SS callSSStorage
+    storhab  SP callSPStorage
+    move     SB DIOS_SB
+    move     SS DIOS_SS
+    move     SP 0
+    push     FL
 
-    PUSH          G7
-    INTGPR        G7
+    push     G7
+    intgpr   G7
 
-    COMP          G7 0x00
-    BREQ-P        getNextSerialChar
+    compi    G7 0x00
+    bpeqpc   getNextSerialChar
 
-    COMP          G7 0x01
-    BREQ-P        getNextKeyboardChar
+    compi    G7 0x01
+    bpeqpc   getNextKeyboardChar
 
-    POP           G7
-    BRAL          interruptRestoreAndFinish
+    pop      G7
+    bralpc   interruptRestoreAndFinish
 
 
 
 :getNextSerialChar
-    PUSH          G1
+    push     G1
 
-    LOAD-W1S0-ABS G1 serialInputBufferTailPointer
-    LOAD-W1S0-ABS G0 serialInputBufferHeadPointer
+    loadcab  G1 serialInputBufferTailPointer
+    loadcab  G0 serialInputBufferHeadPointer
 
-    COMP          G0 G1
-    MOVE          G0 0
-    BREQ          doneGetNextSerialChar
+    compi    G0 G1
+    move     G0 0
+    breqpc   doneGetNextSerialChar
 
-    PUSH          OA
-    MOVE          OA serialInputBuffer
-    LOAD-W1S0-OA  G0 G1
+    push     OA
+    move     OA serialInputBuffer
+    loadcoa  G0 G1
 
-    ADD           G1 G1 1
-    COMP          G1 SERIAL_INPUT_BUFFER_SIZE
-    BRLO          getNextSerialCharStoreNewTail
-    MOVE          G1 0
+    addi     G1 G1 1
+    compi    G1 SERIAL_INPUT_BUFFER_SIZE
+    brlopc   getNextSerialCharStoreNewTail
+    move     G1 0
 
 :getNextSerialCharStoreNewTail
-    STOR-W1S0-ABS G1 serialInputBufferTailPointer
-    POP           OA
+    storcab  G1 serialInputBufferTailPointer
+    pop      OA
 :doneGetNextSerialChar
-    POP           G1
-    RETURN
+    pop      G1
+    return
 
 
 
 :getNextKeyboardChar
-    PUSH          G1
+    push     G1
 
-    LOAD-W1S0-ABS G1 keyboardInputBufferTailPointer
-    LOAD-W1S0-ABS G0 keyboardInputBufferHeadPointer
+    loadcab  G1 keyboardInputBufferTailPointer
+    loadcab  G0 keyboardInputBufferHeadPointer
 
-    COMP          G0 G1
-    MOVE          G0 0
-    BREQ          doneGetNextKeyboardChar
+    compi    G0 G1
+    move     G0 0
+    breqpc   doneGetNextKeyboardChar
 
-    PUSH          OA
-    MOVE          OA keyboardInputBuffer
-    LOAD-W1S0-OA  G0 G1
+    push     OA
+    move     OA keyboardInputBuffer
+    loadcoa  G0 G1
 
-    ADD           G1 G1 1
-    COMP          G1 KEYBOARD_INPUT_BUFFER_SIZE
-    BRLO          getNextKeyboardCharStoreNewTail
-    MOVE          G1 0
+    addi     G1 G1 1
+    compi    G1 KEYBOARD_INPUT_BUFFER_SIZE
+    brlopc   getNextKeyboardCharStoreNewTail
+    move     G1 0
 
 :getNextKeyboardCharStoreNewTail
-    STOR-W1S0-ABS G1 keyboardInputBufferTailPointer
-    POP           OA
+    storcab  G1 keyboardInputBufferTailPointer
+    pop      OA
 :doneGetNextKeyboardChar
-    POP           G1
-    RETURN
+    pop      G1
+    return
 
 
 
 .export handleKeyPress
-    STOR-ABS      SB callSBStorage
-    STOR-W2S0-ABS SS callSSStorage
-    STOR-W2S0-ABS SP callSPStorage
-    MOVE          SB DIOS_SB
-    MOVE          SS DIOS_SS
-    MOVE          SP 0
-    PUSH          FL
+    storwab  SB callSBStorage
+    storhab  SS callSSStorage
+    storhab  SP callSPStorage
+    move     SB DIOS_SB
+    move     SS DIOS_SS
+    move     SP 0
+    push     FL
 
-    PUSH          G0
-    INTGPR        G0
+    push     G0
+    intgpr   G0
 
     // Regular characters
-    COMP          G0 0x2E // `
-    BRLS          regularCharacterPressed
-    COMP          G0 0x32 // TAB
-    BREQ          regularCharacterPressed
-    COMP          G0 0x37 // BACKSPACE
-    BREQ          regularCharacterPressed
-    COMP          G0 0x39 // SPACE
-    BREQ          regularCharacterPressed
+    compi    G0 0x2E // `
+    brlspc   regularCharacterPressed
+    compi    G0 0x32 // TAB
+    breqpc   regularCharacterPressed
+    compi    G0 0x37 // BACKSPACE
+    breqpc   regularCharacterPressed
+    compi    G0 0x39 // SPACE
+    breqpc   regularCharacterPressed
 
     // Special keys
-    COMP          G0 0x36 // ENTER
-    BRHS          specialKeyPressed
+    compi    G0 0x36 // ENTER
+    brhspc   specialKeyPressed
 
     // Modifier keys
-    COMP          G0 0x35 // RALT
-    BRLS          modifierKeyPressed
+    compi    G0 0x35 // RALT
+    brlspc   modifierKeyPressed
 
     // Some unknown key, ignore
 
     :doneHandleKeyPress
-    POP           G0
+    pop      G0
 
-    BRAL          interruptRestoreAndFinish
+    bralpc   interruptRestoreAndFinish
 
 
 
 :regularCharacterPressed
-    COMP          G0 0x32 // TAB
-    BRNE          notTab
-    MOVE          G0 0x09 // Ascii htab
-    BRAL-P        addToKeyboardBuffer
-    BRAL          doneHandleKeyPress
+    compi    G0 0x32 // TAB
+    brnepc   notTab
+    move     G0 0x09 // Ascii htab
+    bpalpc   addToKeyboardBuffer
+    bralpc   doneHandleKeyPress
 
     :notTab
-    COMP          G0 0x39 // SPACE
-    BRNE          notSpace
-    MOVE          G0 0x20 // Ascii space
-    BRAL-P        addToKeyboardBuffer
-    BRAL          doneHandleKeyPress
+    compi    G0 0x39 // SPACE
+    brnepc   notSpace
+    move     G0 0x20 // Ascii space
+    bpalpc   addToKeyboardBuffer
+    bralpc   doneHandleKeyPress
 
     :notSpace
-    COMP          G0 0x37 // BACKSPACE
-    BRNE          notBackspace
-    MOVE          G0 0x08 // Ascii backspace
-    BRAL-P        addToKeyboardBuffer
-    BRAL          doneHandleKeyPress
+    compi    G0 0x37 // BACKSPACE
+    brnepc   notBackspace
+    move     G0 0x08 // Ascii backspace
+    bpalpc   addToKeyboardBuffer
+    bralpc   doneHandleKeyPress
 
     :notBackspace
-    PUSH          G1
-    LOAD-W1S0-ABS G1 keyboardModifiers
-    AND           G1 G1 0b00000011 // Isolate shifts
-    POP           G1
-    BRNE          regCharWithShift
+    push     G1
+    loadcab  G1 keyboardModifiers
+    and      G1 G1 0b00000011 // Isolate shifts
+    pop      G1
+    brnepc   regCharWithShift
 
     // No shift
-    COMP          G0 0x19 // z
-    BRHI          notSmallLetter
-    ADD           G0 G0 0x61 // ascii 'a'
-    BRAL-P        addToKeyboardBuffer
-    BRAL          doneHandleKeyPress
+    compi    G0 0x19 // z
+    brhipc   notSmallLetter
+    addi     G0 G0 0x61 // ascii 'a'
+    bpalpc   addToKeyboardBuffer
+    bralpc   doneHandleKeyPress
 
     :notSmallLetter
-    COMP          G0 0x23 // 9
-    BRHI          notNumber
-    ADD           G0 G0 0x16 // ascii '0' - 0x1A (0)
-    BRAL-P        addToKeyboardBuffer
-    BRAL          doneHandleKeyPress
+    compi    G0 0x23 // 9
+    brhipc   notNumber
+    addi     G0 G0 0x16 // ascii '0' - 0x1A (0)
+    bpalpc   addToKeyboardBuffer
+    bralpc   doneHandleKeyPress
 
     :notNumber
-    COMP          G0 0x2E // `
-    BRHI          doneHandleKeyPress
-    PUSH          OA
-    GETABS        OA baseExtraSymbolLookup
-    SUB           G0 G0 0x24 // -
-    LOAD-W1S0-OA  G0 G0
-    BRAL-P        addToKeyboardBuffer
-    POP           OA
-    BRAL          doneHandleKeyPress
+    compi    G0 0x2E // `
+    brhipc   doneHandleKeyPress
+    push     OA
+    getabs   OA baseExtraSymbolLookup
+    subi     G0 G0 0x24 // -
+    loadcoa  G0 G0
+    bpalpc   addToKeyboardBuffer
+    pop      OA
+    bralpc   doneHandleKeyPress
 
 :regCharWithShift
-    COMP          G0 0x19 // z
-    BRHI          notBigLetter
-    ADD           G0 G0 0x41 // ascii 'A'
-    BRAL-P        addToKeyboardBuffer
-    BRAL          doneHandleKeyPress
+    compi    G0 0x19 // z
+    brhipc   notBigLetter
+    addi     G0 G0 0x41 // ascii 'A'
+    bpalpc   addToKeyboardBuffer
+    bralpc   doneHandleKeyPress
 
     :notBigLetter
-    COMP          G0 0x23 // 9
-    BRHI          notShiftedNumber
-    PUSH          OA
-    GETABS        OA shiftedNumberLookup
-    SUB           G0 G0 0x1A // 0
-    LOAD-W1S0-OA  G0 G0
-    POP           OA
-    BRAL-P        addToKeyboardBuffer
-    BRAL          doneHandleKeyPress
+    compi    G0 0x23 // 9
+    brhipc   notShiftedNumber
+    push     OA
+    getabs   OA shiftedNumberLookup
+    subi     G0 G0 0x1A // 0
+    loadcoa  G0 G0
+    pop      OA
+    bpalpc   addToKeyboardBuffer
+    bralpc   doneHandleKeyPress
 
     :notShiftedNumber
-    COMP          G0 0x2E // `
-    BRHI          doneHandleKeyPress
-    PUSH          OA
-    GETABS        OA shiftedExtraSymbolLookup
-    SUB           G0 G0 0x24 // -
-    LOAD-W1S0-OA  G0 G0
-    BRAL-P        addToKeyboardBuffer
-    POP           OA
-    BRAL          doneHandleKeyPress
+    compi    G0 0x2E // `
+    brhipc   doneHandleKeyPress
+    push     OA
+    getabs   OA shiftedExtraSymbolLookup
+    subi     G0 G0 0x24 // -
+    loadcoa  G0 G0
+    bpalpc   addToKeyboardBuffer
+    pop      OA
+    bralpc   doneHandleKeyPress
 
 
 
 :specialKeyPressed
-    BRAL          doneHandleKeyPress
+    bralpc   doneHandleKeyPress
 
 
 
 :modifierKeyPressed
-    COMP          G0 0x2F // LCTRL
-    BRNE          notLCtrl
-    LOAD-W1S0-ABS G0 keyboardModifiers
-    OR            G0 G0 LCTRL_MASK
-    STOR-W1S0-ABS G0 keyboardModifiers
-    BRAL          doneHandleKeyPress
+    compi    G0 0x2F // LCTRL
+    brnepc   notLCtrl
+    loadcab  G0 keyboardModifiers
+    or       G0 G0 LCTRL_MASK
+    storcab  G0 keyboardModifiers
+    bralpc   doneHandleKeyPress
 
     :notLCtrl
-    COMP          G0 0x33 // RCTRL
-    BRNE          notRCtrl
-    LOAD-W1S0-ABS G0 keyboardModifiers
-    OR            G0 G0 RCTRL_MASK
-    STOR-W1S0-ABS G0 keyboardModifiers
-    BRAL          doneHandleKeyPress
+    compi    G0 0x33 // RCTRL
+    brnepc   notRCtrl
+    loadcab  G0 keyboardModifiers
+    or       G0 G0 RCTRL_MASK
+    storcab  G0 keyboardModifiers
+    bralpc   doneHandleKeyPress
 
     :notRCtrl
-    COMP          G0 0x30 // LSHIFT
-    BRNE          notLShift
-    LOAD-W1S0-ABS G0 keyboardModifiers
-    OR            G0 G0 LSHIFT_MASK
-    STOR-W1S0-ABS G0 keyboardModifiers
-    BRAL          doneHandleKeyPress
+    compi    G0 0x30 // LSHIFT
+    brnepc   notLShift
+    loadcab  G0 keyboardModifiers
+    or       G0 G0 LSHIFT_MASK
+    storcab  G0 keyboardModifiers
+    bralpc   doneHandleKeyPress
 
     :notLShift
-    COMP          G0 0x34 // RSHIFT
-    BRNE          notRShift
-    LOAD-W1S0-ABS G0 keyboardModifiers
-    OR            G0 G0 RSHIFT_MASK
-    STOR-W1S0-ABS G0 keyboardModifiers
-    BRAL          doneHandleKeyPress
+    compi    G0 0x34 // RSHIFT
+    brnepc   notRShift
+    loadcab  G0 keyboardModifiers
+    or       G0 G0 RSHIFT_MASK
+    storcab  G0 keyboardModifiers
+    bralpc   doneHandleKeyPress
 
     :notRShift
-    COMP          G0 0x31 // LALT
-    BRNE          notLAlt
-    LOAD-W1S0-ABS G0 keyboardModifiers
-    OR            G0 G0 LALT_MASK
-    STOR-W1S0-ABS G0 keyboardModifiers
-    BRAL          doneHandleKeyPress
+    compi    G0 0x31 // LALT
+    brnepc   notLAlt
+    loadcab  G0 keyboardModifiers
+    or       G0 G0 LALT_MASK
+    storcab  G0 keyboardModifiers
+    bralpc   doneHandleKeyPress
 
     :notLAlt
-    COMP          G0 0x35 // RALT
-    BRNE          doneHandleKeyPress
-    LOAD-W1S0-ABS G0 keyboardModifiers
-    OR            G0 G0 RALT_MASK
-    STOR-W1S0-ABS G0 keyboardModifiers
-    BRAL          doneHandleKeyPress
+    compi    G0 0x35 // RALT
+    brnepc   doneHandleKeyPress
+    loadcab  G0 keyboardModifiers
+    or       G0 G0 RALT_MASK
+    storcab  G0 keyboardModifiers
+    bralpc   doneHandleKeyPress
 
 
 
 :addToKeyboardBuffer
-    COMP          G0 0
-    BREQ          noKeyboardAddition
+    compi    G0 0
+    breqpc   noKeyboardAddition
 
-    PUSH          OA
-    PUSH          G1
+    push     OA
+    push     G1
 
-    MOVE          OA keyboardInputBuffer
-    LOAD-W1S0-ABS G1 keyboardInputBufferHeadPointer
+    move     OA keyboardInputBuffer
+    loadcab  G1 keyboardInputBufferHeadPointer
 
-    STOR-W1S0-OA  G0 G1
+    storcoa  G0 G1
 
-    ADD           G1 G1 1
-    COMP          G1 KEYBOARD_INPUT_BUFFER_SIZE
-    BRLO          doneKeyboardAddition
+    addi     G1 G1 1
+    compi    G1 KEYBOARD_INPUT_BUFFER_SIZE
+    brlopc   doneKeyboardAddition
 
-    MOVE          G1 0
+    move     G1 0
 
     :doneKeyboardAddition
-    STOR-W1S0-ABS G1 keyboardInputBufferHeadPointer
+    storcab  G1 keyboardInputBufferHeadPointer
 
-    POP           G1
-    POP           OA
+    pop      G1
+    pop      OA
     :noKeyboardAddition
-    RETURN
+    return
 
 
 
 .export handleKeyRelease
-    STOR-ABS      SB callSBStorage
-    STOR-W2S0-ABS SS callSSStorage
-    STOR-W2S0-ABS SP callSPStorage
-    MOVE          SB DIOS_SB
-    MOVE          SS DIOS_SS
-    MOVE          SP 0
-    PUSH          FL
+    storwab  SB callSBStorage
+    storhab  SS callSSStorage
+    storhab  SP callSPStorage
+    move     SB DIOS_SB
+    move     SS DIOS_SS
+    move     SP 0
+    push     FL
 
-    PUSH          G0
-    INTGPR        G0
+    push     G0
+    intgpr   G0
 
-    BRAL          modifierKeyReleased
+    bralpc   modifierKeyReleased
 
     :doneHandleKeyRelease
-    POP           G0
-    BRAL          interruptRestoreAndFinish
+    pop      G0
+    bralpc   interruptRestoreAndFinish
 
 
 
 
 :modifierKeyReleased
-    PUSH          G1
+    push     G1
 
-    COMP          G0 0x2F // LCTRL
-    BRNE          notLCtrlRel
-    MOVE          G1 LCTRL_MASK
-    BRAL          foundModifierToRelease
+    compi    G0 0x2F // LCTRL
+    brnepc   notLCtrlRel
+    move     G1 LCTRL_MASK
+    bralpc   foundModifierToRelease
 
     :notLCtrlRel
-    COMP          G0 0x33 // RCTRL
-    BRNE          notRCtrlRel
-    MOVE          G1 RCTRL_MASK
-    BRAL          foundModifierToRelease
+    compi    G0 0x33 // RCTRL
+    brnepc   notRCtrlRel
+    move     G1 RCTRL_MASK
+    bralpc   foundModifierToRelease
 
     :notRCtrlRel
-    COMP          G0 0x30 // LSHIFT
-    BRNE          notLShiftRel
-    MOVE          G1 LSHIFT_MASK
-    BRAL          foundModifierToRelease
+    compi    G0 0x30 // LSHIFT
+    brnepc   notLShiftRel
+    move     G1 LSHIFT_MASK
+    bralpc   foundModifierToRelease
 
     :notLShiftRel
-    COMP          G0 0x34 // RSHIFT
-    BRNE          notRShiftRel
-    MOVE          G1 RSHIFT_MASK
-    BRAL          foundModifierToRelease
+    compi    G0 0x34 // RSHIFT
+    brnepc   notRShiftRel
+    move     G1 RSHIFT_MASK
+    bralpc   foundModifierToRelease
 
     :notRShiftRel
-    COMP          G0 0x31 // LALT
-    BRNE          notLAltRel
-    MOVE          G1 LALT_MASK
-    BRAL          foundModifierToRelease
+    compi    G0 0x31 // LALT
+    brnepc   notLAltRel
+    move     G1 LALT_MASK
+    bralpc   foundModifierToRelease
 
     :notLAltRel
-    COMP          G0 0x35 // RALT
-    BRNE          doneHandleModifierKeyRelase
-    MOVE          G1 RALT_MASK
-    BRAL          foundModifierToRelease
+    compi    G0 0x35 // RALT
+    brnepc   doneHandleModifierKeyRelase
+    move     G1 RALT_MASK
+    bralpc   foundModifierToRelease
 
     :foundModifierToRelease
-    LOAD-W1S0-ABS G0 keyboardModifiers
-    NOT           G1 G1
-    AND           G0 G0 G1
-    STOR-W1S0-ABS G0 keyboardModifiers
+    loadcab  G0 keyboardModifiers
+    not      G1 G1
+    and      G0 G0 G1
+    storcab  G0 keyboardModifiers
     
 
     :doneHandleModifierKeyRelase
-    POP           G1
-    BRAL          doneHandleKeyRelease
+    pop      G1
+    bralpc   doneHandleKeyRelease
 
 
 

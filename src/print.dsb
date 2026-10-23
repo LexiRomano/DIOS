@@ -4,62 +4,62 @@
 
 // Print a null-terminated string to derial
 .export derialPrintString
-    PUSH          FL
-    PUSH          OA
-    PUSH          G0
-    PUSH          G1
-    COMP          G0 0
-    BREQ          derialPrintStringDone
-    MOVE          OA G0
-    MOVE          G1 0
+    push     FL
+    push     OA
+    push     G0
+    push     G1
+    compi    G0 0
+    breqpc   derialPrintStringDone
+    move     OA G0
+    move     G1 0
 :derialPrintStringLoop
-    LOAD-W1S0-OA  G0 G1
-    COMP          G0 0
-    BREQ          derialPrintStringDone
-    BRAL-P        derialPrint
-    ADD           G1 G1 1
-    BRAL          derialPrintStringLoop
+    loadcoa  G0 G1
+    compi    G0 0
+    breqpc   derialPrintStringDone
+    bpalpc   derialPrint
+    addi     G1 G1 1
+    bralpc   derialPrintStringLoop
 :derialPrintStringDone
-    POP           G1
-    POP           G0
-    POP           OA
-    POP           FL
-    RETURN
+    pop      G1
+    pop      G0
+    pop      OA
+    pop      FL
+    return
 
 // Print what is in the G0 register to derial
 :derialPrint
-    PUSH          FL
-    PUSH          OA
-    PUSH          G0
-    LOAD-ABS      OA serialPortDDATAddress
-    STOR-W1S0-OA  G0 3
+    push     FL
+    push     OA
+    push     G0
+    loadwab  OA serialPortDDATAddress
+    storcoa  G0 3
 :derialPrintWaitForFlush
     // Keep checking the status register for buffer not empty
-    LOAD-W1S0-OA  G0 6
-    AND           G0 G0 0b00000001
-    BRNE          derialPrintWaitForFlush
-    POP           G0
-    POP           OA
-    POP           FL
-    RETURN
+    loadcoa  G0 6
+    and      G0 G0 0b00000001
+    brnepc   derialPrintWaitForFlush
+    pop      G0
+    pop      OA
+    pop      FL
+    return
 
 .export syscallPrint // 0x40
-    STOR-ABS      SB callSBStorage
-    STOR-ABS      SS callSSStorage
-    STOR-ABS      SP callSPStorage
-    MOVE          SB DIOS_SB
-    MOVE          SS DIOS_SS
-    MOVE          SP 0
+    storwab  SB callSBStorage
+    storwab  SS callSSStorage
+    storwab  SP callSPStorage
+    move     SB DIOS_SB
+    move     SS DIOS_SS
+    move     SP 0
 
-    PUSH          G7
-    INTGPR        G7
+    push     G7
+    intgpr   G7
 
-    COMP          G7 0x00
-    BREQ-P        derialPrint
+    compi    G7 0x00
+    bpeqpc   derialPrint
 
-    COMP          G7 0x01
-    BREQ-P        derialPrintString
+    compi    G7 0x01
+    bpeqpc   derialPrintString
 
-    POP           G7
-    .requires     interruptRestoreAndFinish
-    BRAL          interruptRestoreAndFinish
+    pop      G7
+    .requires interruptRestoreAndFinish
+    bralpc   interruptRestoreAndFinish

@@ -5,169 +5,172 @@
 .requires derialPrintString
 
 // Initialize stack
-    MOVE          SB DIOS_SB
-    MOVE          SS DIOS_SS
-    MOVE          SP 0
+    move     SB DIOS_SB
+    move     SS DIOS_SS
+    move     SP 0
 
 // Initialize variables in RAM
-    MOVE          G0 0
-    STOR-W1S0-ABS G0 serialInputBufferHeadPointer
-    STOR-W1S0-ABS G0 serialInputBufferTailPointer
-    STOR-W1S0-ABS G0 keyboardInputBufferHeadPointer
-    STOR-W1S0-ABS G0 keyboardInputBufferTailPointer
+    move     G0 0
+    storcab  G0 serialInputBufferHeadPointer
+    storcab  G0 serialInputBufferTailPointer
+    storcab  G0 keyboardInputBufferHeadPointer
+    storcab  G0 keyboardInputBufferTailPointer
 
 // Initialize interrupt table
-    MOVE          IL 0x9000
-    MOVE          OA IL
+    move     IL 0x9000
+    move     OA IL
 
-    GETABS        G0 unhandledInterrupt
-    MOVE          G1 0
+    getabs   G0 unhandledInterrupt
+    move     G1 0
 
 :fillUnusedSysCallLoopTop
-    COMP          G1 0x400
-    BRHS          doneFillUnusedSysCall
-    STOR-OA       G0 G1
-    ADD           G1 G1 4
-    BRAL          fillUnusedSysCallLoopTop
+    compi    G1 0x400
+    brhspc   doneFillUnusedSysCall
+    storwoa  G0 G1
+    addi     G1 G1 4
+    bralpc   fillUnusedSysCallLoopTop
 
 :doneFillUnusedSysCall
 // Initialize hardware interrupts
-    .requires        handleKeyPress
-    GETABS        G0 handleKeyPress
-    STOR-OA       G0 0x04
+    .requires   handleKeyPress
+    getabs   G0 handleKeyPress
+    storwoa  G0 0x04
 
-    .requires        handleKeyRelease
-    GETABS        G0 handleKeyRelease
-    STOR-OA       G0 0x08
+    .requires   handleKeyRelease
+    getabs   G0 handleKeyRelease
+    storwoa  G0 0x08
 
-    GETABS        G0 peripheralEvent
-    STOR-OA       G0 0x0C
+    getabs   G0 peripheralEvent
+    storwoa  G0 0x0C
 
 // Initialize used syscalls
-    .requires        syscallPrint
-    GETABS        G0 syscallPrint
-    STOR-OA       G0 0x100
+    .requires   syscallPrint
+    getabs   G0 syscallPrint
+    storwoa  G0 0x100
 
-    .requires        syscallCharIn
-    GETABS        G0 syscallCharIn
-    STOR-OA       G0 0x104
+    .requires   syscallCharIn
+    getabs   G0 syscallCharIn
+    storwoa  G0 0x104
 
-    .requires        syscallSleep
-    GETABS        G0 syscallSleep
-    STOR-OA       G0 0x108
+    .requires   syscallSleep
+    getabs   G0 syscallSleep
+    storwoa  G0 0x108
 
 // Scan for devices
-    .requires     scanForDevices
-    BRAL-P        scanForDevices
+    .requires scanForDevices
+    bpalpc   scanForDevices
 
 
 // Check for a serial port
-    LOAD-ABS      G0 serialPortDDATAddress
-    COMP          G0 0
-    BREQ          term
+    loadwab  G0 serialPortDDATAddress
+    compi    G0 0
+    breqpc   term
 
 // Configure derial
-    MOVE          OA G0
-    MOVE          G0 0b110 // int on rcv, autoflush, no int on flush complete
-    STOR-W1S0-OA  G0 5
+    move     OA G0
+    move     G0 0b110 // int on rcv, autoflush, no int on flush complete
+    storcoa  G0 5
 
-    GETABS        G0 DIOSInitString
-    BRAL-P        derialPrintString
+    getabs   G0 DIOSInitString
+    bpalpc   derialPrintString
 
-    LOAD-ABS      OA driveDDATAdress
-    COMP          OA 0
-    BRNE          boot
-    GETABS        G0 noDriveFoundString
-    BRAL-P        derialPrintString
-    BRAL          waitToDie
+    loadwab  OA driveDDATAdress
+    compi    OA 0
+    brnepc   boot
+    getabs   G0 noDriveFoundString
+    bpalpc   derialPrintString
+    bralpc   waitToDie
 
 :boot
-    GETABS        G0 driveFoundString
-    BRAL-P        derialPrintString
+    getabs   G0 driveFoundString
+    bpalpc   derialPrintString
 
 // Configure drive
-    MOVE          G0 0b00000000 // disable interrupts
-    STOR-W1S0-OA  G0 0xC
+    move     G0 0b00000000 // disable interrupts
+    storcoa  G0 0xC
 
-    MOVE          G0 BOOT_LOCATION
-    STOR-OA       G0 3
-    MOVE          G0 0
-    STOR-OA       G0 7
-    STOR-W1S0-OA  G0 0xB
+    move     G0 BOOT_LOCATION
+    storwoa  G0 3
+    move     G0 0
+    storwoa  G0 7
+    storcoa  G0 0xB
 :waitForDriveToLoad
-    LOAD-W1S0-OA  G0 0xD
-    AND           G1 G0 0b00000001
-    BRNE          waitForDriveToLoad
-    AND           G1 G0 0b00000010
-    BREQ-ABS      BOOT_LOCATION
-    GETABS        G0 driveLoadFail
-    BRAL-P        derialPrintString
+    loadcoa  G0 0xD
+    and      G1 G0 0b00000001
+    brnepc   waitForDriveToLoad
+    and      G1 G0 0b00000010
+    breqab   BOOT_LOCATION
+    getabs   G0 driveLoadFail
+    bpalpc   derialPrintString
 
 :waitToDie
-    LOAD-ABS      OA serialPortDDATAddress
+    loadwab  OA serialPortDDATAddress
 
 :waitToDieLoop
-    LOAD-W1S0-OA  G0 6
-    AND           G0 G0 0b00000100
-    BREQ          waitToDieLoop
-    LOAD-W1S0-OA  G0 2
+    loadcoa  G0 6
+    and      G0 G0 0b00000100
+    breqpc   waitToDieLoop
+    loadcoa  G0 2
 
 :term
-    TERM
+    // TODO terminate from motherboard
+    getabs   G0 tmpKillMe
+    bpalpc   derialPrintString
+    bralpc   0
 
 :unhandledInterrupt
-    INTFIN
+    intfin
 
 :peripheralEvent
-    STOR-ABS      SB callSBStorage
-    STOR-ABS      SS callSSStorage
-    STOR-ABS      SP callSPStorage
-    MOVE          SB DIOS_SB
-    MOVE          SS DIOS_SS
-    MOVE          SP 0
-    PUSH          FL
+    storwab  SB callSBStorage
+    storwab  SS callSSStorage
+    storwab  SP callSPStorage
+    move     SB DIOS_SB
+    move     SS DIOS_SS
+    move     SP 0
+    push     FL
 
-    PUSH          G7
-    INTGPR        G7
-    AND           G7 G7 0b00111111
+    push     G7
+    intgpr   G7
+    and      G7 G7 0b00111111
 
-    COMP          G7 serialPortDeviceId
-    BRAL-P        handleSerialInput
+    compi    G7 serialPortDeviceId
+    bpalpc   handleSerialInput
 
-    POP           G7
-    BRAL          interruptRestoreAndFinish
+    pop      G7
+    bralpc   interruptRestoreAndFinish
 
 :handleSerialInput
-    PUSH          G0
-    PUSH          G1
-    PUSH          OA
+    push     G0
+    push     G1
+    push     OA
 
-    LOAD-ABS      OA serialPortDDATAddress
-    LOAD-W1S0-OA  G0 2
+    loadwab  OA serialPortDDATAddress
+    loadcoa  G0 2
 
-    MOVE          OA serialInputBuffer
-    LOAD-W1S0-ABS G1 serialInputBufferHeadPointer
-    STOR-W1S0-OA  G0 G1
+    move     OA serialInputBuffer
+    loadcab  G1 serialInputBufferHeadPointer
+    storcoa  G0 G1
 
-    ADD           G1 G1 1
-    COMP          G1 SERIAL_INPUT_BUFFER_SIZE
-    BRLO          doneHandleSerialInput
+    addi     G1 G1 1
+    compi    G1 SERIAL_INPUT_BUFFER_SIZE
+    brlopc   doneHandleSerialInput
 
-    MOVE          G1 0
+    move     G1 0
 :doneHandleSerialInput
-    STOR-W1S0-ABS G1 serialInputBufferHeadPointer
+    storcab  G1 serialInputBufferHeadPointer
 
-    POP           OA
-    POP           G1
-    POP           G0
-    RETURN
+    pop      OA
+    pop      G1
+    pop      G0
+    return
 
 .export interruptRestoreAndFinish
-    POP           FL
-    LOAD-ABS      SB callSBStorage
-    LOAD-W2S0-ABS SS callSSStorage
-    LOAD-W2S0-ABS SP callSPStorage
-    INTFIN
+    pop      FL
+    loadwab  SB callSBStorage
+    loadhab  SS callSSStorage
+    loadhab  SP callSPStorage
+    intfin
 
 :DIOSInitString
     .set * "~DIOS~\r\n\n"
@@ -180,3 +183,6 @@
 
 :driveLoadFail
     .set * "Failed to boot from drive, press any key to terminate: \r\n"
+
+:tmpKillMe
+    .set * "Terminate not supported yet, please close manually\r\n"
