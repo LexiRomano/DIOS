@@ -3,55 +3,54 @@
 .section sleep
 
 .export syscallSleep // 0x42
-    STOR-ABS      SB callSBStorage
-    STOR-ABS      SS callSSStorage
-    STOR-ABS      SP callSPStorage
-    MOVE          SB DIOS_SB
-    MOVE          SS DIOS_SS
-    MOVE          SP 0
+    storwab  SB callSBStorage
+    storwab  SS callSSStorage
+    storwab  SP callSPStorage
+    move     SB DIOS_SB
+    move     SS DIOS_SS
+    move     SP 0
 
-    PUSH          G7
-    INTGPR        G7
+    push     G7
+    intgpr   G7
 
-    COMP          G7 0x00
-    BREQ-P        microSleep
+    compi    G7 0x00
+    bpeqpc   microSleep
 
-    POP           G7
-    .requires     interruptRestoreAndFinish
-    BRAL          interruptRestoreAndFinish
+    pop      G7
+    .requires interruptRestoreAndFinish
+    bralpc   interruptRestoreAndFinish
 
 
 
 :microSleep
-    PUSH          G0
-    PUSH          G2
-    PUSH          OA
+    push     G0
+    push     G2
+    push     OA
 
-    LOAD-ABS      OA timerDDATAddress
-    MOVE          G2 0 // Config: no interrupts, one-shot
-    STOR-W1S0-OA  G2 1
+    loadwab  OA timerDDATAddress
+    move     G2 0 // Config: no interrupts, one-shot
+    storcoa  G2 1
 
     :microSleepBigSectionLoop
-    COMP          G0 0xFFFF
-    BRLS          microSleepSmallSection
-    SUB           G0 G0 0xFFFF
-    MOVE          G2 0xFFFF
-    STOR-W2S0-OA  G2 2
-    BRAL-P        microSleepWait
-    BRAL          microSleepBigSectionLoop
+    compi    G0 0xFFFF
+    brlspc   microSleepSmallSection
+    subi     G0 G0 0xFFFF
+    move     G2 0xFFFF
+    storhoa  G2 2
+    bpalpc   microSleepWait
+    bralpc   microSleepBigSectionLoop
 
     :microSleepSmallSection
-    STOR-W2S0-OA  G0 2
-    BRAL-P        microSleepWait
+    storhoa  G0 2
+    bpalpc   microSleepWait
 
-    POP           OA
-    POP           G2
-    POP           G0
-    RETURN
+    pop      OA
+    pop      G2
+    pop      G0
+    return
 
 :microSleepWait
-    LOAD-W2S0-OA  G2 2
-    //DEBUG         G2
-    COMP          G2 0
-    BRNE          microSleepWait
-    RETURN
+    loadhoa  G2 2
+    compi    G2 0
+    brnepc   microSleepWait
+    return

@@ -3,118 +3,118 @@
 .section scan
 
 .export scanForDevices
-    MOVE          OA 0x5FF8
+    move     OA 0x5FF8
 
     // NULL the ddat address variables
-    MOVE          G0 0
-    STOR-ABS      G0 keyboardDDATAddress
-    STOR-ABS      G0 serialPortDDATAddress
-    STOR-ABS      G0 driveManagerDDATAddress
-    STOR-ABS      G0 driveDDATAdress
-    STOR-ABS      G0 timerDDATAddress
+    move     G0 0
+    storwab  G0 keyboardDDATAddress
+    storwab  G0 serialPortDDATAddress
+    storwab  G0 driveManagerDDATAddress
+    storwab  G0 driveDDATAdress
+    storwab  G0 timerDDATAddress
 
 :deviceScanLoopTop
-    ADD           OA OA 8
-    COMP          OA 0x6100
-    BRHS          doneDeviceScan
-    LOAD-W1S0-OA  G0 1
-    COMP          G0 0x02
-    BREQ          foundStorageDevice
-    COMP          G0 0x05
-    BREQ          foundPeripheral
-    COMP          G0 0x04
-    BREQ          foundTimer
-    COMP          G0 0xFF
-    BREQ          doneDeviceScan
-    BRAL          deviceScanLoopTop
+    addi     OA OA 8
+    compi    OA 0x6100
+    brhspc   doneDeviceScan
+    loadcoa  G0 1
+    compi    G0 0x02
+    breqpc   foundStorageDevice
+    compi    G0 0x05
+    breqpc   foundPeripheral
+    compi    G0 0x04
+    breqpc   foundTimer
+    compi    G0 0xFF
+    breqpc   doneDeviceScan
+    bralpc   deviceScanLoopTop
 
 :foundStorageDevice
-    LOAD-OA       OB 4
-    LOAD-W1S0-OB  G0 0
-    COMP          G0 0x01
-    BREQ          foundDardriveManager
-    COMP          G0 0x02
-    BREQ          foundDardriveDrive
-    BRAL          deviceScanLoopTop
+    loadwoa  OB 4
+    loadcob  G0 0
+    compi    G0 0x01
+    breqpc   foundDardriveManager
+    compi    G0 0x02
+    breqpc   foundDardriveDrive
+    bralpc   deviceScanLoopTop
 
 :foundDardriveManager
-    STOR-W1S0-ABS G0 driveManagerType
-    LOAD-ABS      G0 driveManagerDDATAddress
-    COMP          G0 0
-    BRNE          deviceScanLoopTop
-    STOR-ABS      OB driveManagerDDATAddress
-    SUB           G0 OA 0x6000
-    BSRT          G0 G0 3
-    STOR-W1S0-ABS G0 driveManagerDeviceId
+    storcab  G0 driveManagerType
+    loadwab  G0 driveManagerDDATAddress
+    compi    G0 0
+    brnepc   deviceScanLoopTop
+    storwab  OB driveManagerDDATAddress
+    subi     G0 OA 0x6000
+    bsrt     G0 G0 3
+    storcab  G0 driveManagerDeviceId
     
-    BRAL          deviceScanLoopTop
+    bralpc   deviceScanLoopTop
 
 :foundDardriveDrive
-    STOR-W1S0-ABS G0 driveType
-    LOAD-ABS      G0 driveDDATAdress
-    COMP          G0 0
-    BRNE          deviceScanLoopTop
-    STOR-ABS      OB driveDDATAdress
-    SUB           G0 OA 0x6000
-    BSRT          G0 G0 3
-    STOR-W1S0-ABS G0 driveDeviceId
-    BRAL          deviceScanLoopTop
+    storcab  G0 driveType
+    loadwab  G0 driveDDATAdress
+    compi    G0 0
+    brnepc   deviceScanLoopTop
+    storwab  OB driveDDATAdress
+    subi     G0 OA 0x6000
+    bsrt     G0 G0 3
+    storcab  G0 driveDeviceId
+    bralpc   deviceScanLoopTop
 
 :foundPeripheral
-    LOAD-OA       OB 4
-    LOAD-W1S0-OB  G0 0
-    COMP          G0 0x4B
-    BREQ          foundKeyboard
-    COMP          G0 0x53
-    BREQ          foundSerialPort
-    BRAL          deviceScanLoopTop
+    loadwoa  OB 4
+    loadcob  G0 0
+    compi    G0 0x4B
+    breqpc   foundKeyboard
+    compi    G0 0x53
+    breqpc   foundSerialPort
+    bralpc   deviceScanLoopTop
 
 :foundKeyboard
-    LOAD-ABS      G0 keyboardDDATAddress
-    COMP          G0 0
-    BRNE          deviceScanLoopTop
-    LOAD-W1S0-OB  G0 1
-    COMP          G0 0x01
-    BREQ          foundDboard
-    BRAL          deviceScanLoopTop
+    loadwab  G0 keyboardDDATAddress
+    compi    G0 0
+    brnepc   deviceScanLoopTop
+    loadcob  G0 1
+    compi    G0 0x01
+    breqpc   foundDboard
+    bralpc   deviceScanLoopTop
 
 :foundDboard
-    STOR-W1S0-ABS G0 keyboardType
-    STOR-ABS      OB keyboardDDATAddress
-    SUB           G0 OA 0x6000
-    BSRT          G0 G0 3
-    STOR-W1S0-ABS G0 keyboardDeviceId
-    BRAL          deviceScanLoopTop
+    storcab  G0 keyboardType
+    storwab  OB keyboardDDATAddress
+    subi     G0 OA 0x6000
+    bsrt     G0 G0 3
+    storcab  G0 keyboardDeviceId
+    bralpc   deviceScanLoopTop
 
 :foundSerialPort
-    LOAD-ABS      G0 serialPortDDATAddress
-    COMP          G0 0
-    BRNE          deviceScanLoopTop
-    LOAD-W1S0-OB  G0 1
-    COMP          G0 0x01
-    BREQ          foundDerial
-    BRAL          deviceScanLoopTop
+    loadwab  G0 serialPortDDATAddress
+    compi    G0 0
+    brnepc   deviceScanLoopTop
+    loadcob  G0 1
+    compi    G0 0x01
+    breqpc   foundDerial
+    bralpc   deviceScanLoopTop
 
 :foundDerial
-    STOR-W1S0-ABS G0 serialPortType
-    STOR-ABS      OB serialPortDDATAddress
-    SUB           G0 OA 0x6000
-    BSRT          G0 G0 3
-    STOR-W1S0-ABS G0 serialPortDeviceId
-    BRAL          deviceScanLoopTop
+    storcab  G0 serialPortType
+    storwab  OB serialPortDDATAddress
+    subi     G0 OA 0x6000
+    bsrt     G0 G0 3
+    storcab  G0 serialPortDeviceId
+    bralpc   deviceScanLoopTop
 
 :foundTimer
-    LOAD-OA       OB 4
-    LOAD-W1S0-OB  G0 0
-    COMP          G0 0x01
-    BRNE          deviceScanLoopTop
+    loadwoa  OB 4
+    loadcob  G0 0
+    compi    G0 0x01
+    brnepc   deviceScanLoopTop
     // Is dimer
-    STOR-W1S0-ABS G0 timerType
-    STOR-ABS      OB timerDDATAddress
-    SUB           G0 OA 0x6000
-    BSRT          G0 G0 3
-    STOR-W1S0-ABS G0 timerDeviceId
-    BRAL          deviceScanLoopTop
+    storcab  G0 timerType
+    storwab  OB timerDDATAddress
+    subi     G0 OA 0x6000
+    bsrt     G0 G0 3
+    storcab  G0 timerDeviceId
+    bralpc   deviceScanLoopTop
 
 :doneDeviceScan
-    RETURN
+    return
