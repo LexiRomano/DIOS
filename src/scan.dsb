@@ -12,6 +12,7 @@
     storwab  G0 driveManagerDDATAddress
     storwab  G0 driveDDATAdress
     storwab  G0 timerDDATAddress
+    storwab  G0 motherboardDDATAddress
 
 :deviceScanLoopTop
     addi     OA OA 8
@@ -24,6 +25,8 @@
     breqpc   foundPeripheral
     compi    G0 0x04
     breqpc   foundTimer
+    compi    G0 0x01
+    breqpc   foundMotherboard
     compi    G0 0xFF
     breqpc   doneDeviceScan
     bralpc   deviceScanLoopTop
@@ -114,6 +117,19 @@
     subi     G0 OA 0x6000
     bsrt     G0 G0 3
     storcab  G0 timerDeviceId
+    bralpc   deviceScanLoopTop
+
+:foundMotherboard
+    loadwoa  OB 4
+    loadcob  G0 0
+    compi    G0 0x01
+    brnepc  deviceScanLoopTop
+    // Is our motherboard
+    storcab  G0 motherboardType
+    storwab  OB motherboardDDATAddress
+    subi     G0 OA 0x6000
+    bsrt     G0 G0 3
+    storcab  G0 motherboardDeviceId
     bralpc   deviceScanLoopTop
 
 :doneDeviceScan

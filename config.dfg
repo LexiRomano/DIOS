@@ -3,6 +3,8 @@
 .source src/print.dsb
 .source src/charIn.dsb
 .source src/sleep.dsb
+.source src/shutdown.dsb
+.source src/time.dsb
 
 .out dios.bin
 
@@ -11,3 +13,5 @@ scan
 print
 charIn
 sleep
+time
+shutdown

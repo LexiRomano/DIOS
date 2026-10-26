@@ -1,0 +1,67 @@
+.include src/aliases.dsb
+
+.section time
+
+.export syscallTime
+
+    storwab  SB callSBStorage
+    storhab  SS callSSStorage
+    storhab  SP callSPStorage
+    move     SB DIOS_SB
+    move     SS DIOS_SS
+    move     SP 0
+    push     FL
+
+    // Check interrupt parameter. Only 0 is supported right now
+    push     G7
+    intgpr   G7
+    compi    G7 0
+    brnepc   done
+
+    // Check address. Can't write to anything lower than the boot address
+    compi    G0 BOOT_LOCATION
+    brhspc   goodAddress
+    move     G0 0
+    bralpc   done
+
+    :goodAddress
+    push     OA
+    push     OB
+    push     G1
+
+    // Offset setup
+    loadwab  OA motherboardDDATAddress
+    move     OB G0
+
+    // Year
+    loadhoa  G1 2
+    storhob  G1 0
+
+    // Month
+    loadcoa  G1 4
+    storcob  G1 2
+
+    // Day
+    loadcoa  G1 5
+    storcob  G1 3
+
+    // Hour
+    loadcoa  G1 6
+    storcob  G1 4
+
+    // Minute
+    loadcoa  G1 7
+    storcob  G1 5
+
+    // Second
+    loadcoa  G1 8
+    storcob  G1 6
+
+    pop      G1
+    pop      OB
+    pop      OA
+
+    :done
+    pop      G7
+    .requires interruptRestoreAndFinish
+    bralpc   interruptRestoreAndFinish

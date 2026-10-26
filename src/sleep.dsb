@@ -4,11 +4,12 @@
 
 .export syscallSleep // 0x42
     storwab  SB callSBStorage
-    storwab  SS callSSStorage
-    storwab  SP callSPStorage
+    storhab  SS callSSStorage
+    storhab  SP callSPStorage
     move     SB DIOS_SB
     move     SS DIOS_SS
     move     SP 0
+    push     FL
 
     push     G7
     intgpr   G7

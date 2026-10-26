@@ -56,6 +56,14 @@
     getabs   G0 syscallSleep
     storwoa  G0 0x108
 
+    .requires   syscallTime
+    getabs   G0 syscallTime
+    storwoa  G0 0x10C
+
+    .requires   syscallShutdown
+    getabs   G0 syscallShutdown
+    storwoa  G0 0x3FC
+
 // Scan for devices
     .requires scanForDevices
     bpalpc   scanForDevices
@@ -113,18 +121,15 @@
     loadcoa  G0 2
 
 :term
-    // TODO terminate from motherboard
-    getabs   G0 tmpKillMe
-    bpalpc   derialPrintString
-    bralpc   0
+    bralpc   syscallShutdown
 
 :unhandledInterrupt
     intfin
 
 :peripheralEvent
     storwab  SB callSBStorage
-    storwab  SS callSSStorage
-    storwab  SP callSPStorage
+    storhab  SS callSSStorage
+    storhab  SP callSPStorage
     move     SB DIOS_SB
     move     SS DIOS_SS
     move     SP 0
@@ -183,6 +188,3 @@
 
 :driveLoadFail
     .set * "Failed to boot from drive, press any key to terminate: \r\n"
-
-:tmpKillMe
-    .set * "Terminate not supported yet, please close manually\r\n"

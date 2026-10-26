@@ -1,0 +1,15 @@
+.include src/aliases.dsb
+
+.section shutdown
+
+.export syscallShutdown
+
+    // Write something to the shutdown byte on the motherboard
+    loadwab  OA motherboardDDATAddress
+    compi    OA 0
+    breqpc   die // No motherboard found, just spin forever
+    storcoa  G0 1
+
+    // Wait to die x_x
+    :die
+    bralpc   0

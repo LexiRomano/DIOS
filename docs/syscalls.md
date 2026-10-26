@@ -31,3 +31,26 @@ NOTE: Sleeping may result in corrupted keyboard/serial input. To be fixed
 ### `0x0042` Microsecond sleep
 
 This will block for the number of microseconds provided in G0.
+
+## `0x43` Time
+
+### `0x0043` Get Time
+
+Populates a structure pointed to by G0 with the following data:
+
+| Offset in struct | Size | Content |
+| ---------------- | ---- | ------- |
+|              0-1 |    2 | Year    |
+|                2 |    1 | Month   |
+|                3 |    1 | Day     |
+|                4 |    1 | Hour    |
+|                5 |    1 | Minute  |
+|                6 |    1 | Second  |
+
+If the address pointed to by G0 cannot be modified, G0 will be set to 0.
+
+## `0xFF` Shutdown
+
+### `0x..FF` Shutdown
+
+Invoking this will shut down the computer. The parameter does not matter

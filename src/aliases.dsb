@@ -34,13 +34,17 @@
 .define timerDDATAddress 0x9627 // to 962A
 
 // 0, 0, RALT, LALT, RCTRL, LCTRL, RSHIFT, LSHIFT
-.define keyboardModifiers 0x9625
+.define keyboardModifiers 0x962B
 .define RALT_MASK   0b00100000
 .define LALT_MASK   0b00010000
 .define RCTRL_MASK  0b00001000
 .define LCTRL_MASK  0b00000100
 .define RSHIFT_MASK 0b00000010
 .define LSHIFT_MASK 0b00000001
+
+.define motherboardType        0x962C
+.define motherboardDeviceId    0x962D
+.define motherboardDDATAddress 0x962E // to 9631
 
 // STACK CONSTANTS //
 .define DIOS_SB 0x8000
